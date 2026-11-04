@@ -1,0 +1,24 @@
+# OpenSOC - Grafana datasources (provisioned, read-only in the UI).
+apiVersion: 1
+
+datasources:
+  - name: Wazuh alerts
+    uid: opensoc-wazuh-alerts
+    type: elasticsearch
+    access: proxy
+    url: https://wazuh.indexer:9200
+    isDefault: true
+    editable: false
+    basicAuth: true
+    basicAuthUser: grafana
+    jsonData:
+      index: "wazuh-alerts-*"
+      timeField: "timestamp"
+      maxConcurrentShardRequests: 5
+      logMessageField: full_log
+      logLevelField: rule.level
+      tlsAuthWithCACert: true
+      serverName: wazuh.indexer
+    secureJsonData:
+      basicAuthPassword: $GRAFANA_INDEXER_PASSWORD
+      tlsCACert: $__file{/etc/grafana/certs/root-ca.pem}

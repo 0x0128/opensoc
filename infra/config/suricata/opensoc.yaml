@@ -1,0 +1,29 @@
+%YAML 1.1
+---
+# OpenSOC overrides, included at the end of /etc/suricata/suricata.yaml.
+# Only EVE JSON is written (fast.log disabled) and the noisy flow/netflow/stats
+# records are left out: every EVE line is parsed by the Wazuh manager.
+outputs:
+  - fast:
+      enabled: no
+  - eve-log:
+      enabled: yes
+      filetype: regular
+      filename: eve.json
+      community-id: yes
+      types:
+        - alert:
+            payload: no
+            payload-printable: yes
+            tagged-packets: no
+        - anomaly:
+            enabled: yes
+        - http:
+            extended: yes
+        - dns
+        - tls:
+            extended: yes
+        - files:
+            force-magic: no
+        - ssh
+        - smtp

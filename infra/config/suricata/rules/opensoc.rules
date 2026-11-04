@@ -1,0 +1,5 @@
+# OpenSOC local Suricata rules. Loaded in addition to the rules managed by
+# suricata-update (ET Open by default). Use SIDs 9000000-9099999.
+
+# Self-test probe used by infra/verify.sh: a UDP datagram carrying this marker.
+alert udp any any -> any 40000:40010 (msg:"OPENSOC self-test - IDS pipeline probe"; flow:to_server; content:"OPENSOC-IDS-TEST"; classtype:misc-activity; priority:1; sid:9000001; rev:1;)

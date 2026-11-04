@@ -1,0 +1,669 @@
+# OpenSOC — single-host SOC stack.
+#
+# Do not run `docker compose up` directly on a fresh checkout: ./install.sh creates
+# .env (random secrets), the TLS PKI and the rendered configs this file mounts.
+# After the first install, normal compose commands work from this directory.
+#
+# Images are pinned (tag or digest). Wazuh is pinned to 4.14.9, the latest stable 4.x.
+# MISP and Shuffle use their Docker Hub images (nukib/misp, frikky/shuffle) pinned by digest.
+
+name: opensoc
+
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+x-defaults: &defaults
+  restart: unless-stopped
+  logging: *logging
+  environment: &default-env
+    TZ: ${OPENSOC_TZ:-UTC}
+
+services:
+  # ---------------------------------------------------------------- Wazuh (SIEM / XDR)
+  wazuh.indexer:
+    <<: *defaults
+    image: wazuh/wazuh-indexer:4.14.9
+    hostname: wazuh.indexer
+    environment:
+      <<: *default-env
+      OPENSEARCH_JAVA_OPTS: "-Xms${WAZUH_INDEXER_HEAP:-1g} -Xmx${WAZUH_INDEXER_HEAP:-1g}"
+    mem_limit: ${WAZUH_INDEXER_MEM_LIMIT:-2g}
+    ulimits:
+      nofile: {soft: "${OPENSOC_NOFILE:-65536}", hard: "${OPENSOC_NOFILE:-65536}"}
+    volumes:
+      - wazuh-indexer-data:/var/lib/wazuh-indexer
+      - ./generated/certs/root-ca.pem:/usr/share/wazuh-indexer/config/certs/root-ca.pem:ro
+      - ./generated/certs/wazuh.indexer.pem:/usr/share/wazuh-indexer/config/certs/wazuh.indexer.pem:ro
+      - ./generated/certs/wazuh.indexer-key.pem:/usr/share/wazuh-indexer/config/certs/wazuh.indexer.key:ro
+      - ./generated/certs/admin.pem:/usr/share/wazuh-indexer/config/certs/admin.pem:ro
+      - ./generated/certs/admin-key.pem:/usr/share/wazuh-indexer/config/certs/admin-key.pem:ro
+      - ./config/wazuh/wazuh.indexer.yml:/usr/share/wazuh-indexer/config/opensearch.yml:ro
+      - ./generated/wazuh/internal_users.yml:/usr/share/wazuh-indexer/config/opensearch-security/internal_users.yml:ro
+    ports:
+      # Loopback only: used by verify.sh and for troubleshooting.
+      - "127.0.0.1:${WAZUH_INDEXER_PORT:-9200}:9200"
+    networks: [soc]
+    healthcheck:
+      # 401 means TLS is up and the security index is initialised (503 until then).
+      test: ["CMD-SHELL", "curl -sk -o /dev/null -w '%{http_code}' https://localhost:9200/ | grep -q 401"]
+      interval: 15s
+      timeout: 10s
+      retries: 20
+      start_period: 60s
+
+  wazuh.manager:
+    <<: *defaults
+    image: wazuh/wazuh-manager:4.14.9
+    hostname: wazuh.manager
+    environment:
+      <<: *default-env
+      INDEXER_URL: https://wazuh.indexer:9200
+      INDEXER_USERNAME: admin
+      INDEXER_PASSWORD: ${WAZUH_INDEXER_PASSWORD:?run ./install.sh first}
+      FILEBEAT_SSL_VERIFICATION_MODE: full
+      SSL_CERTIFICATE_AUTHORITIES: /etc/ssl/root-ca.pem
+      SSL_CERTIFICATE: /etc/ssl/filebeat.pem
+      SSL_KEY: /etc/ssl/filebeat.key
+      API_USERNAME: wazuh-wui
+      API_PASSWORD: ${WAZUH_API_PASSWORD:?run ./install.sh first}
+    mem_limit: ${WAZUH_MANAGER_MEM_LIMIT:-1536m}
+    ulimits:
+      nofile: {soft: "${OPENSOC_NOFILE:-65536}", hard: "${OPENSOC_NOFILE:-65536}"}
+    volumes:
+      - wazuh-api-configuration:/var/ossec/api/configuration
+      - wazuh-etc:/var/ossec/etc
+      - wazuh-logs:/var/ossec/logs
+      - wazuh-queue:/var/ossec/queue
+      - wazuh-var-multigroups:/var/ossec/var/multigroups
+      - wazuh-integrations:/var/ossec/integrations
+      - wazuh-active-response:/var/ossec/active-response/bin
+      - wazuh-agentless:/var/ossec/agentless
+      - wazuh-wodles:/var/ossec/wodles
+      - filebeat-etc:/etc/filebeat
+      - filebeat-var:/var/lib/filebeat
+      - ./generated/certs/root-ca.pem:/etc/ssl/root-ca.pem:ro
+      - ./generated/certs/wazuh.manager.pem:/etc/ssl/filebeat.pem:ro
+      - ./generated/certs/wazuh.manager-key.pem:/etc/ssl/filebeat.key:ro
+      # Files under /wazuh-config-mount are copied over /var/ossec on every start.
+      - ./generated/wazuh/ossec.conf:/wazuh-config-mount/etc/ossec.conf:ro
+      - ./generated/wazuh/authd.pass:/wazuh-config-mount/etc/authd.pass:ro
+      - ./config/wazuh/rules/opensoc_rules.xml:/wazuh-config-mount/etc/rules/opensoc_rules.xml:ro
+      - ./config/wazuh/integrations/custom-thehive:/wazuh-config-mount/integrations/custom-thehive:ro
+      - ./config/wazuh/integrations/custom-thehive.py:/wazuh-config-mount/integrations/custom-thehive.py:ro
+      # MISP -> Wazuh: IOC CDB lists written by misp-ioc-sync, used by the built-in
+      # malicious-ioc ruleset (0999-malicious-ioc-rules.xml) and opensoc_rules.xml.
+      - ./data/wazuh-ioc-lists:/var/ossec/etc/lists/malicious-ioc
+      # Suricata EVE JSON (read by the manager's logcollector).
+      - suricata-logs:/var/log/suricata:ro
+    ports:
+      - "${OPENSOC_BIND_ADDRESS:-0.0.0.0}:1514:1514"
+      - "${OPENSOC_BIND_ADDRESS:-0.0.0.0}:1515:1515"
+      - "${OPENSOC_BIND_ADDRESS:-0.0.0.0}:514:514/udp"
+      - "${OPENSOC_BIND_ADDRESS:-0.0.0.0}:${WAZUH_API_PORT:-55000}:55000"
+    networks: [soc]
+    depends_on:
+      wazuh.indexer:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "/var/ossec/bin/wazuh-control status | grep -q 'wazuh-analysisd is running' && curl -sk -o /dev/null https://localhost:55000/"]
+      interval: 15s
+      timeout: 10s
+      retries: 20
+      start_period: 90s
+
+  wazuh.dashboard:
+    <<: *defaults
+    image: wazuh/wazuh-dashboard:4.14.9
+    hostname: wazuh.dashboard
+    environment:
+      <<: *default-env
+      INDEXER_USERNAME: admin
+      INDEXER_PASSWORD: ${WAZUH_INDEXER_PASSWORD:?run ./install.sh first}
+      WAZUH_API_URL: https://wazuh.manager
+      DASHBOARD_USERNAME: kibanaserver
+      DASHBOARD_PASSWORD: ${WAZUH_DASHBOARD_PASSWORD:?run ./install.sh first}
+      API_USERNAME: wazuh-wui
+      API_PASSWORD: ${WAZUH_API_PASSWORD:?run ./install.sh first}
+    mem_limit: ${WAZUH_DASHBOARD_MEM_LIMIT:-1g}
+    volumes:
+      - ./generated/certs/wazuh.dashboard.pem:/usr/share/wazuh-dashboard/certs/wazuh-dashboard.pem:ro
+      - ./generated/certs/wazuh.dashboard-key.pem:/usr/share/wazuh-dashboard/certs/wazuh-dashboard-key.pem:ro
+      - ./generated/certs/root-ca.pem:/usr/share/wazuh-dashboard/certs/root-ca.pem:ro
+      - ./config/wazuh/opensearch_dashboards.yml:/usr/share/wazuh-dashboard/config/opensearch_dashboards.yml:ro
+      - wazuh-dashboard-custom:/usr/share/wazuh-dashboard/plugins/wazuh/public/assets/custom
+    ports:
+      - "${OPENSOC_BIND_ADDRESS:-0.0.0.0}:${WAZUH_DASHBOARD_PORT:-443}:5601"
+    networks: [soc]
+    depends_on:
+      wazuh.indexer:
+        condition: service_healthy
+      wazuh.manager:
+        condition: service_started
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sk -o /dev/null -w '%{http_code}' https://localhost:5601/app/login | grep -q 200"]
+      interval: 15s
+      timeout: 10s
+      retries: 20
+      start_period: 90s
+
+  # ---------------------------------------------------------------- Suricata (NIDS)
+  suricata:
+    <<: *defaults
+    image: jasonish/suricata:8.0.8
+    # Host networking: Suricata sniffs the host NIC (SURICATA_INTERFACE).
+    network_mode: host
+    cap_add: [NET_ADMIN, NET_RAW, SYS_NICE]
+    entrypoint: ["/bin/bash", "/opt/opensoc/entrypoint.sh"]
+    environment:
+      <<: *default-env
+      SURICATA_INTERFACE: ${SURICATA_INTERFACE:?run ./install.sh first}
+      SURICATA_UPDATE_INTERVAL: ${SURICATA_UPDATE_INTERVAL:-86400}
+      SURICATA_EVE_MAX_MB: ${SURICATA_EVE_MAX_MB:-512}
+    mem_limit: ${SURICATA_MEM_LIMIT:-1g}
+    volumes:
+      - ./config/suricata/entrypoint.sh:/opt/opensoc/entrypoint.sh:ro
+      - ./config/suricata/opensoc.yaml:/etc/suricata-opensoc/opensoc.yaml:ro
+      - ./config/suricata/rules:/etc/suricata-opensoc/rules:ro
+      - suricata-etc:/etc/suricata
+      - suricata-lib:/var/lib/suricata
+      - suricata-logs:/var/log/suricata
+      - suricata-run:/var/run/suricata
+    healthcheck:
+      test: ["CMD-SHELL", "suricatasc -c uptime | grep -Eq '\"return\": ?\"OK\"'"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 120s
+
+  # ---------------------------------------------------------------- TheHive + Cortex (case management / analysis)
+  cassandra:
+    <<: *defaults
+    image: cassandra:4.1.12
+    hostname: cassandra
+    environment:
+      <<: *default-env
+      CASSANDRA_CLUSTER_NAME: TheHive
+      CASSANDRA_NUM_TOKENS: "4"
+      MAX_HEAP_SIZE: ${CASSANDRA_HEAP:-1G}
+      HEAP_NEWSIZE: 256M
+    mem_limit: ${CASSANDRA_MEM_LIMIT:-2g}
+    volumes:
+      - cassandra-data:/var/lib/cassandra
+    networks: [data]
+    healthcheck:
+      test: ["CMD-SHELL", "cqlsh -e 'describe keyspaces' >/dev/null 2>&1"]
+      interval: 15s
+      timeout: 10s
+      retries: 20
+      start_period: 90s
+
+  elasticsearch:
+    <<: *defaults
+    image: elasticsearch:8.19.23
+    hostname: elasticsearch
+    environment:
+      <<: *default-env
+      discovery.type: single-node
+      cluster.name: thehive
+      xpack.security.enabled: "true"
+      xpack.security.http.ssl.enabled: "false"
+      xpack.security.transport.ssl.enabled: "false"
+      xpack.ml.enabled: "false"
+      cluster.routing.allocation.disk.threshold_enabled: "false"
+      thread_pool.search.queue_size: "100000"
+      thread_pool.write.queue_size: "100000"
+      ELASTIC_PASSWORD: ${ELASTIC_PASSWORD:?run ./install.sh first}
+      ES_JAVA_OPTS: "-Xms${ELASTICSEARCH_HEAP:-768m} -Xmx${ELASTICSEARCH_HEAP:-768m}"
+    mem_limit: ${ELASTICSEARCH_MEM_LIMIT:-1536m}
+    ulimits:
+      nofile: {soft: "${OPENSOC_NOFILE:-65536}", hard: "${OPENSOC_NOFILE:-65536}"}
+    volumes:
+      - elasticsearch-data:/usr/share/elasticsearch/data
+    networks: [data]
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fs -u \"elastic:$$ELASTIC_PASSWORD\" 'http://localhost:9200/_cluster/health?wait_for_status=yellow&timeout=5s' >/dev/null"]
+      interval: 15s
+      timeout: 10s
+      retries: 20
+      start_period: 60s
+
+  thehive:
+    <<: *defaults
+    image: strangebee/thehive:5.8.1
+    hostname: thehive
+    environment:
+      <<: *default-env
+      TH_SECRET: ${THEHIVE_SECRET:?run ./install.sh first}
+      TH_CQL_HOSTNAMES: cassandra
+      TH_CQL_WAIT: "0"
+      TH_INDEX_BACKEND: elasticsearch
+      TH_ELASTICSEARCH_HOSTNAMES: elasticsearch
+      TH_ELASTICSEARCH_USERNAME: elastic
+      TH_ELASTICSEARCH_PASSWORD: ${ELASTIC_PASSWORD:?run ./install.sh first}
+      TH_STORAGE_DIRECTORY: /data/files
+      # Cortex is registered at runtime by install.sh (API /api/v1/admin/config/cortex).
+      TH_NO_CONFIG_CORTEX: "1"
+      JAVA_OPTS: "-Xms${THEHIVE_HEAP:-1g} -Xmx${THEHIVE_HEAP:-1g} -XX:MaxMetaspaceSize=400m -XX:ReservedCodeCacheSize=250m"
+    mem_limit: ${THEHIVE_MEM_LIMIT:-2g}
+    volumes:
+      - thehive-data:/data
+      - ./config/thehive/application.conf:/etc/thehive/application.conf:ro
+    networks: [soc, data]
+    depends_on:
+      cassandra:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fs http://localhost:9000/api/status >/dev/null"]
+      interval: 15s
+      timeout: 10s
+      retries: 30
+      start_period: 120s
+
+  cortex:
+    <<: *defaults
+    image: thehiveproject/cortex:4.1.0
+    hostname: cortex
+    # Run as the image's cortex user (uid 1001) plus the host docker group, so the
+    # entrypoint does not chown the host Docker socket and analyzers can still
+    # run as sibling containers.
+    user: "1001:1001"
+    group_add:
+      - "${DOCKER_GID:-999}"
+    environment:
+      <<: *default-env
+      es_uri: http://elasticsearch:9200
+      no_config_secret: "1"
+      job_directory: ${CORTEX_JOB_DIR:?run ./install.sh first}
+      docker_job_directory: ${CORTEX_JOB_DIR:?run ./install.sh first}
+      # Read by application.conf through HOCON env substitution.
+      CORTEX_SECRET: ${CORTEX_SECRET:?run ./install.sh first}
+      ELASTIC_PASSWORD: ${ELASTIC_PASSWORD:?run ./install.sh first}
+      JAVA_OPTS: "-Xms${CORTEX_HEAP:-512m} -Xmx${CORTEX_HEAP:-512m} -XX:MaxMetaspaceSize=300m"
+    mem_limit: ${CORTEX_MEM_LIMIT:-1g}
+    volumes:
+      - ./config/cortex/application.conf:/etc/cortex/application.conf:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+      # Same path inside and outside: analyzer containers bind-mount job folders from the host.
+      - ${CORTEX_JOB_DIR:?run ./install.sh first}:${CORTEX_JOB_DIR:?run ./install.sh first}
+    networks: [soc, data]
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fs http://localhost:9001/api/status >/dev/null"]
+      interval: 15s
+      timeout: 10s
+      retries: 30
+      start_period: 90s
+
+  # ---------------------------------------------------------------- MISP (threat intelligence)
+  misp-db:
+    <<: *defaults
+    image: mariadb:11.8
+    hostname: misp-db
+    environment:
+      <<: *default-env
+      MARIADB_DATABASE: misp
+      MARIADB_USER: misp
+      MARIADB_PASSWORD: ${MISP_DB_PASSWORD:?run ./install.sh first}
+      MARIADB_ROOT_PASSWORD: ${MISP_DB_ROOT_PASSWORD:?run ./install.sh first}
+    command: ["--innodb-buffer-pool-size=${MISP_DB_BUFFER_POOL:-256M}", "--max-connections=200"]
+    mem_limit: ${MISP_DB_MEM_LIMIT:-768m}
+    volumes:
+      - misp-db-data:/var/lib/mysql
+    networks: [data]
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+
+  misp-redis:
+    <<: *defaults
+    image: valkey/valkey:8.1-alpine
+    hostname: misp-redis
+    environment:
+      <<: *default-env
+      REDIS_PASSWORD: ${MISP_REDIS_PASSWORD:?run ./install.sh first}
+    command: ["sh", "-c", "exec valkey-server --requirepass \"$$REDIS_PASSWORD\" --save 300 10"]
+    mem_limit: ${MISP_REDIS_MEM_LIMIT:-256m}
+    volumes:
+      - misp-redis-data:/data
+    networks: [data]
+    healthcheck:
+      test: ["CMD-SHELL", "valkey-cli --no-auth-warning -a \"$$REDIS_PASSWORD\" ping | grep -q PONG"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  misp-modules:
+    <<: *defaults
+    image: nukib/misp-modules:latest@sha256:fd3a2bbe1e7b6e7c3d61deb952038a379a03766338ffd67a6a52a0f6f7eec952
+    hostname: misp-modules
+    mem_limit: ${MISP_MODULES_MEM_LIMIT:-512m}
+    cap_drop: [NET_RAW, SYS_CHROOT, MKNOD, NET_BIND_SERVICE, AUDIT_WRITE, SETFCAP]
+    networks: [soc]
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fs -o /dev/null http://localhost:6666/healthcheck"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+
+  misp:
+    <<: *defaults
+    image: nukib/misp:latest@sha256:7ba3450cdc5a9109a9e448fe9d4d2f8673762b216e7e4f58351711943d740855
+    hostname: misp
+    environment:
+      <<: *default-env
+      MYSQL_HOST: misp-db
+      MYSQL_LOGIN: misp
+      MYSQL_PASSWORD: ${MISP_DB_PASSWORD:?run ./install.sh first}
+      MYSQL_DATABASE: misp
+      REDIS_HOST: misp-redis
+      REDIS_PASSWORD: ${MISP_REDIS_PASSWORD:?run ./install.sh first}
+      MISP_BASEURL: https://${OPENSOC_HOSTNAME:?run ./install.sh first}:${MISP_PORT:-8443}
+      MISP_UUID: ${MISP_UUID:?run ./install.sh first}
+      MISP_ORG: ${MISP_ORG:-OpenSOC}
+      MISP_EMAIL: ${MISP_EMAIL:-misp@opensoc.local}
+      MISP_MODULE_URL: http://misp-modules
+      SECURITY_SALT: ${MISP_SALT:?run ./install.sh first}
+      SECURITY_ENCRYPTION_KEY: ${MISP_ENCRYPTION_KEY:?run ./install.sh first}
+      PHP_TIMEZONE: ${OPENSOC_TZ:-UTC}
+      PHP_MEMORY_LIMIT: 1024M
+    mem_limit: ${MISP_MEM_LIMIT:-1536m}
+    tmpfs:
+      - /tmp
+    cap_drop: [NET_RAW, SYS_CHROOT, MKNOD, AUDIT_WRITE, SETFCAP]
+    volumes:
+      - misp-logs:/var/www/MISP/app/tmp/logs/
+      - misp-certs:/var/www/MISP/app/files/certs/
+      - misp-attachments:/var/www/MISP/app/attachments/
+      - misp-img-orgs:/var/www/MISP/app/files/img/orgs/
+      - misp-img-custom:/var/www/MISP/app/files/img/custom/
+      - misp-gnupg:/var/www/MISP/.gnupg/
+    networks: [soc, data]
+    depends_on:
+      misp-db:
+        condition: service_healthy
+      misp-redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "su-exec apache misp_status.py"]
+      interval: 20s
+      timeout: 15s
+      retries: 30
+      start_period: 120s
+
+  misp-ioc-sync:
+    <<: *defaults
+    image: python:3.13-alpine
+    hostname: misp-ioc-sync
+    command: ["python", "-u", "/app/misp_to_wazuh.py"]
+    environment:
+      <<: *default-env
+      MISP_URL: http://misp
+      MISP_API_KEY: ${MISP_AUTOMATION_KEY:?run ./install.sh first}
+      LISTS_DIR: /lists
+      SYNC_INTERVAL: ${MISP_SYNC_INTERVAL:-300}
+      IOC_MAX_AGE: ${MISP_IOC_MAX_AGE:-90d}
+      WAZUH_API_URL: https://wazuh.manager:55000
+      WAZUH_API_USER: wazuh-wui
+      WAZUH_API_PASSWORD: ${WAZUH_API_PASSWORD:?run ./install.sh first}
+    mem_limit: 128m
+    volumes:
+      - ./config/misp-sync/misp_to_wazuh.py:/app/misp_to_wazuh.py:ro
+      - ./data/wazuh-ioc-lists:/lists
+    networks: [soc]
+    depends_on:
+      misp:
+        condition: service_started
+      wazuh.manager:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "python", "/app/misp_to_wazuh.py", "--healthcheck"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # ---------------------------------------------------------------- Shuffle (SOAR)
+  shuffle-opensearch:
+    <<: *defaults
+    # Shuffle needs an OpenSearch 2.x/3.x backend. We reuse the Wazuh indexer image
+    # (OpenSearch 2.19) with the security plugin disabled; it is only reachable on the
+    # internal "data" network by shuffle-backend.
+    image: wazuh/wazuh-indexer:4.14.9
+    hostname: shuffle-opensearch
+    environment:
+      <<: *default-env
+      OPENSEARCH_JAVA_OPTS: "-Xms${SHUFFLE_OPENSEARCH_HEAP:-512m} -Xmx${SHUFFLE_OPENSEARCH_HEAP:-512m}"
+    mem_limit: ${SHUFFLE_OPENSEARCH_MEM_LIMIT:-1280m}
+    ulimits:
+      nofile: {soft: "${OPENSOC_NOFILE:-65536}", hard: "${OPENSOC_NOFILE:-65536}"}
+    volumes:
+      - shuffle-opensearch-data:/var/lib/wazuh-indexer
+      - ./config/shuffle-opensearch/opensearch.yml:/usr/share/wazuh-indexer/config/opensearch.yml:ro
+    networks: [data]
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fs 'http://localhost:9200/_cluster/health?wait_for_status=yellow&timeout=5s' >/dev/null"]
+      interval: 15s
+      timeout: 10s
+      retries: 20
+      start_period: 60s
+
+  shuffle-backend:
+    <<: *defaults
+    image: frikky/shuffle:backend@sha256:164e20fe2ab1f6f0451daa32805f68c8e4e4c995a68ef88a91ccec7dd3c682b1
+    # Fixed names: Orborus' zombie-container cleanup skips containers named "shuffle*"
+    # and would otherwise stop the core containers (same image repository as the apps).
+    container_name: shuffle-backend
+    hostname: shuffle-backend
+    environment:
+      <<: *default-env
+      SHUFFLE_DEFAULT_USERNAME: ${SHUFFLE_ADMIN_USER:-admin}
+      SHUFFLE_DEFAULT_PASSWORD: ${SHUFFLE_ADMIN_PASSWORD:?run ./install.sh first}
+      SHUFFLE_DEFAULT_APIKEY: ${SHUFFLE_API_KEY:?run ./install.sh first}
+      SHUFFLE_ENCRYPTION_MODIFIER: ${SHUFFLE_ENCRYPTION_MODIFIER:?run ./install.sh first}
+      SHUFFLE_APP_HOTLOAD_FOLDER: /shuffle-apps
+      SHUFFLE_FILE_LOCATION: /shuffle-files
+      SHUFFLE_APP_DOWNLOAD_LOCATION: https://github.com/shuffle/python-apps
+      SHUFFLE_APP_FORCE_UPDATE: "false"
+      SHUFFLE_BASE_IMAGE_REPOSITORY: frikky
+      SHUFFLE_USE_GCHR_OVERRIDE_FOR_AUTODEPLOY: "false"
+      BASE_URL: http://shuffle-backend:5001
+      SSO_REDIRECT_URL: https://${OPENSOC_HOSTNAME:?run ./install.sh first}:${SHUFFLE_PORT:-3443}
+      ENVIRONMENT_NAME: Shuffle
+      DOCKER_API_VERSION: "1.44"
+      SHUFFLE_OPENSEARCH_URL: http://shuffle-opensearch:9200
+      SHUFFLE_OPENSEARCH_SKIPSSL_VERIFY: "true"
+      SHUFFLE_ELASTIC: "true"
+      SHUFFLE_CHAT_DISABLED: "true"
+      SHUFFLE_SKIP_PIPELINES: "true"
+      # The hourly "ops health check" builds a throw-away app image; the container
+      # healthcheck below is enough.
+      SHUFFLE_HEALTHCHECK_DISABLED: "true"
+      SHUFFLE_STATS_DISABLED: "true"
+      SHUFFLE_LOGS_DISABLED: "true"
+      LIQUID_SANITIZE_INPUT: "true"
+    mem_limit: ${SHUFFLE_BACKEND_MEM_LIMIT:-768m}
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./data/shuffle-apps:/shuffle-apps
+      - ./data/shuffle-files:/shuffle-files
+    networks: [soc, data]
+    depends_on:
+      shuffle-opensearch:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://localhost:5001/api/v1/_ah/health"]
+      interval: 15s
+      timeout: 10s
+      retries: 20
+      start_period: 60s
+
+  shuffle-frontend:
+    <<: *defaults
+    image: frikky/shuffle:frontend@sha256:69c12769cda010476e886eb27330a2f4ef650235ea95dec7293038e6223f3f0a
+    container_name: shuffle-frontend
+    hostname: shuffle-frontend
+    environment:
+      <<: *default-env
+      BACKEND_HOSTNAME: shuffle-backend
+    mem_limit: 128m
+    networks: [soc]
+    depends_on:
+      shuffle-backend:
+        condition: service_started
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fs -o /dev/null http://localhost/"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+
+  shuffle-orborus:
+    <<: *defaults
+    image: frikky/shuffle:orborus@sha256:5fed3672b8be2c9b6042eaa4da0d1fe321ab93ec9d0264b10e46560242ef2183
+    container_name: shuffle-orborus
+    hostname: shuffle-orborus
+    environment:
+      <<: *default-env
+      ENVIRONMENT_NAME: Shuffle
+      ORG_ID: Shuffle
+      BASE_URL: http://shuffle-backend:5001
+      DOCKER_API_VERSION: "1.44"
+      # Classic mode: one worker container per execution. "run"/"swarm" would turn
+      # the host into a Docker Swarm manager and publish worker ports on all interfaces.
+      SHUFFLE_SWARM_CONFIG: ""
+      # Do not deploy Shuffle's Tenzir "pipelines" node (it binds host port 1514/tcp+udp).
+      SHUFFLE_SKIP_PIPELINES: "true"
+      SHUFFLE_WORKER_IMAGE: frikky/shuffle:worker@sha256:272120e595701e0b61ffe28240c579591eb07ddab49537455a17b0ec779b4b86
+      SHUFFLE_BASE_IMAGE_REPOSITORY: frikky
+      SHUFFLE_USE_GCHR_OVERRIDE_FOR_AUTODEPLOY: "false"
+      SHUFFLE_APP_SDK_TIMEOUT: "300"
+      SHUFFLE_ORBORUS_EXECUTION_CONCURRENCY: "5"
+      SHUFFLE_PASS_WORKER_PROXY: "false"
+      SHUFFLE_PASS_APP_PROXY: "false"
+      SHUFFLE_STATS_DISABLED: "true"
+      SHUFFLE_LOGS_DISABLED: "true"
+      CLEANUP: "true"
+    mem_limit: 256m
+    security_opt: ["seccomp:unconfined"]
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks: [soc]
+    depends_on:
+      shuffle-backend:
+        condition: service_healthy
+    healthcheck:
+      # Orborus has no API: check that it runs and can reach the backend it polls.
+      test: ["CMD-SHELL", "grep -q orborus /proc/1/cmdline && wget -q -O /dev/null http://shuffle-backend:5001/api/v1/_ah/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  # ---------------------------------------------------------------- Grafana (dashboards)
+  grafana:
+    <<: *defaults
+    image: grafana/grafana:13.2.5
+    hostname: grafana
+    environment:
+      <<: *default-env
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:?run ./install.sh first}
+      GF_SERVER_ROOT_URL: https://${OPENSOC_HOSTNAME:?run ./install.sh first}:${GRAFANA_PORT:-3000}/
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_AUTH_ANONYMOUS_ENABLED: "false"
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+      GF_ANALYTICS_CHECK_FOR_UPDATES: "false"
+      GF_NEWS_NEWS_FEED_ENABLED: "false"
+      # Read by provisioning/datasources/opensoc.yml
+      GRAFANA_INDEXER_PASSWORD: ${GRAFANA_INDEXER_PASSWORD:?run ./install.sh first}
+    mem_limit: ${GRAFANA_MEM_LIMIT:-1g}
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./config/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./config/grafana/dashboards:/var/lib/grafana-dashboards/opensoc:ro
+      - ./generated/certs/root-ca.pem:/etc/grafana/certs/root-ca.pem:ro
+    networks: [soc]
+    depends_on:
+      wazuh.indexer:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fs http://localhost:3000/api/health | grep -q '\"database\": *\"ok\"'"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  # ---------------------------------------------------------------- TLS reverse proxy
+  proxy:
+    <<: *defaults
+    image: nginx:1.30.6-alpine
+    hostname: proxy
+    mem_limit: 128m
+    volumes:
+      - ./config/proxy/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./generated/certs/opensoc-proxy.pem:/etc/nginx/certs/opensoc.pem:ro
+      - ./generated/certs/opensoc-proxy-key.pem:/etc/nginx/certs/opensoc-key.pem:ro
+    ports:
+      - "${OPENSOC_BIND_ADDRESS:-0.0.0.0}:${THEHIVE_PORT:-9000}:9000"
+      - "${OPENSOC_BIND_ADDRESS:-0.0.0.0}:${CORTEX_PORT:-9001}:9001"
+      - "${OPENSOC_BIND_ADDRESS:-0.0.0.0}:${MISP_PORT:-8443}:8443"
+      - "${OPENSOC_BIND_ADDRESS:-0.0.0.0}:${SHUFFLE_PORT:-3443}:3443"
+      - "${OPENSOC_BIND_ADDRESS:-0.0.0.0}:${GRAFANA_PORT:-3000}:3000"
+    networks: [soc]
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:8081/healthz"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+
+networks:
+  # Application network: every UI/API service.
+  soc:
+    name: opensoc_soc
+  # Datastores only (Cassandra, Elasticsearch, MariaDB, Valkey, Shuffle OpenSearch).
+  # internal: no route to the outside world and no published ports.
+  data:
+    name: opensoc_data
+    internal: true
+
+volumes:
+  wazuh-indexer-data:
+  wazuh-api-configuration:
+  wazuh-etc:
+  wazuh-logs:
+  wazuh-queue:
+  wazuh-var-multigroups:
+  wazuh-integrations:
+  wazuh-active-response:
+  wazuh-agentless:
+  wazuh-wodles:
+  filebeat-etc:
+  filebeat-var:
+  wazuh-dashboard-custom:
+  suricata-etc:
+  suricata-lib:
+  suricata-logs:
+  suricata-run:
+  cassandra-data:
+  elasticsearch-data:
+  thehive-data:
+  misp-db-data:
+  misp-redis-data:
+  misp-logs:
+  misp-certs:
+  misp-attachments:
+  misp-img-orgs:
+  misp-img-custom:
+  misp-gnupg:
+  shuffle-opensearch-data:
+  grafana-data:

@@ -1,0 +1,110 @@
+<!--
+  OpenSOC custom rules (IDs 100100-100299).
+
+  MISP -> Wazuh: misp-ioc-sync writes MISP IOCs (to_ids=1) into the CDB lists used by
+  Wazuh's built-in malicious-ioc ruleset (ruleset/rules/0999-malicious-ioc-rules.xml):
+    etc/lists/malicious-ioc/malicious-ip       ip-src / ip-dst / domain|ip ...
+    etc/lists/malicious-ioc/malicious-domains  domain / hostname ...
+    etc/lists/malicious-ioc/malware-hashes     md5 / sha1 / sha256 ...
+  The rules below escalate those matches and tag them with the "misp_ioc" group.
+  Network sightings (Suricata, group "misp_ioc_network") are routed to the Shuffle
+  playbook; the other IOC matches go straight to TheHive (see ossec.conf).
+-->
+
+<group name="opensoc,misp_ioc,">
+
+  <!--
+    Network sightings. Direct children of the Suricata rules (instead of children of the
+    built-in 99915-99918) so that, being level 12, they are evaluated before the
+    severity-based escalation rules below (Wazuh orders sibling rules by level).
+  -->
+  <rule id="100100" level="12">
+    <if_sid>86601</if_sid>
+    <list field="src_ip" lookup="match_key">etc/lists/malicious-ioc/malicious-ip</list>
+    <description>MISP IOC: Suricata alert from source IP $(src_ip) listed in MISP</description>
+    <group>misp_ioc_network,</group>
+    <mitre>
+      <id>T1071</id>
+    </mitre>
+  </rule>
+
+  <rule id="100101" level="12">
+    <if_sid>86601</if_sid>
+    <list field="dest_ip" lookup="match_key">etc/lists/malicious-ioc/malicious-ip</list>
+    <description>MISP IOC: Suricata alert to destination IP $(dest_ip) listed in MISP</description>
+    <group>misp_ioc_network,</group>
+    <mitre>
+      <id>T1071</id>
+    </mitre>
+  </rule>
+
+  <rule id="100102" level="12">
+    <if_sid>86601, 86602</if_sid>
+    <list field="http.hostname" lookup="match_key">etc/lists/malicious-ioc/malicious-domains</list>
+    <description>MISP IOC: HTTP traffic to domain $(http.hostname) listed in MISP</description>
+    <group>misp_ioc_network,</group>
+    <mitre>
+      <id>T1071.001</id>
+    </mitre>
+  </rule>
+
+  <rule id="100103" level="12">
+    <if_sid>86601, 86603</if_sid>
+    <list field="dns.rrname" lookup="match_key">etc/lists/malicious-ioc/malicious-domains</list>
+    <description>MISP IOC: DNS query for domain $(dns.rrname) listed in MISP</description>
+    <group>misp_ioc_network,</group>
+    <mitre>
+      <id>T1071.004</id>
+    </mitre>
+  </rule>
+
+  <rule id="100104" level="12">
+    <if_sid>86601, 86604</if_sid>
+    <list field="tls.sni" lookup="match_key">etc/lists/malicious-ioc/malicious-domains</list>
+    <description>MISP IOC: TLS connection to domain $(tls.sni) listed in MISP</description>
+    <group>misp_ioc_network,</group>
+    <mitre>
+      <id>T1071.001</id>
+    </mitre>
+  </rule>
+
+  <!-- Host/log sightings: escalate the built-in malicious-ioc rules. -->
+  <rule id="100105" level="12">
+    <if_sid>99902, 99904, 99905, 99907, 99908, 99909, 99911, 99914, 99919</if_sid>
+    <description>MISP IOC: activity from an IP address listed in MISP</description>
+  </rule>
+
+  <rule id="100106" level="14">
+    <if_sid>99901, 99903, 99906, 99910, 99912, 99913, 99920</if_sid>
+    <description>MISP IOC: high-confidence match (malware hash or successful access from an IP listed in MISP)</description>
+  </rule>
+
+</group>
+
+<group name="opensoc,ids,suricata,">
+
+  <!-- Wazuh ships every Suricata alert at level 3; escalate by Suricata severity. -->
+  <rule id="100200" level="10">
+    <if_sid>86601</if_sid>
+    <field name="alert.severity">^1$</field>
+    <description>Suricata: high severity alert - $(alert.signature)</description>
+  </rule>
+
+  <rule id="100201" level="7">
+    <if_sid>86601</if_sid>
+    <field name="alert.severity">^2$</field>
+    <description>Suricata: medium severity alert - $(alert.signature)</description>
+  </rule>
+
+</group>
+
+<group name="opensoc,opensoc_selftest,">
+
+  <!-- Synthetic event injected by infra/verify.sh through the Wazuh API (POST /events). -->
+  <rule id="100299" level="12">
+    <decoded_as>json</decoded_as>
+    <field name="opensoc.selftest">\.+</field>
+    <description>OpenSOC self-test event $(opensoc.selftest) (verify.sh)</description>
+  </rule>
+
+</group>

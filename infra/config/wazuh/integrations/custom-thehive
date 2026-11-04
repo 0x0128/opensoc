@@ -1,0 +1,5 @@
+#!/bin/sh
+# OpenSOC - wrapper used by wazuh-integratord: runs custom-thehive.py with the
+# Python interpreter embedded in the Wazuh manager.
+WAZUH_PATH="${WAZUH_PATH:-$(cd "$(dirname "$0")/.." && pwd -P)}"
+exec "${WAZUH_PATH}/framework/python/bin/python3" "$(dirname "$0")/custom-thehive.py" "$@"

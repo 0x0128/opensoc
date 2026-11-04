@@ -1,0 +1,130 @@
+{
+  "name": "OpenSOC - MISP IOC triage",
+  "description": "Example playbook. Triggered by Wazuh (rules in group misp_ioc_network: Suricata traffic matching a MISP IOC). 1) looks the indicator up in MISP, 2) records a sighting in MISP, 3) creates an enriched TheHive alert and 4) promotes it to a case. Placeholders __LIKE_THIS__ are filled in by infra/install.sh.",
+  "start": "6b7a3c1e-0001-4c1a-9a51-0e5e0c0f0001",
+  "is_valid": true,
+  "execution_environment": "Shuffle",
+  "tags": ["opensoc", "wazuh", "misp", "thehive"],
+  "triggers": [
+    {
+      "app_name": "Webhook",
+      "app_version": "1.0.0",
+      "id": "__WEBHOOK_ID__",
+      "name": "Webhook",
+      "label": "Wazuh alert",
+      "environment": "Shuffle",
+      "trigger_type": "WEBHOOK",
+      "status": "running",
+      "is_valid": true,
+      "position": { "x": 0, "y": 0 },
+      "parameters": [
+        { "name": "url", "value": "http://shuffle-backend:5001/api/v1/hooks/webhook___WEBHOOK_ID__" },
+        { "name": "tmp", "value": "" },
+        { "name": "auth_headers", "value": "" },
+        { "name": "custom_response_body", "value": "" },
+        { "name": "await_response", "value": "" }
+      ]
+    }
+  ],
+  "branches": [
+    { "id": "6b7a3c1e-1001-4c1a-9a51-0e5e0c0f1001", "source_id": "__WEBHOOK_ID__", "destination_id": "6b7a3c1e-0001-4c1a-9a51-0e5e0c0f0001" },
+    { "id": "6b7a3c1e-1002-4c1a-9a51-0e5e0c0f1002", "source_id": "6b7a3c1e-0001-4c1a-9a51-0e5e0c0f0001", "destination_id": "6b7a3c1e-0002-4c1a-9a51-0e5e0c0f0002" },
+    { "id": "6b7a3c1e-1003-4c1a-9a51-0e5e0c0f1003", "source_id": "6b7a3c1e-0002-4c1a-9a51-0e5e0c0f0002", "destination_id": "6b7a3c1e-0003-4c1a-9a51-0e5e0c0f0003" },
+    { "id": "6b7a3c1e-1004-4c1a-9a51-0e5e0c0f1004", "source_id": "6b7a3c1e-0003-4c1a-9a51-0e5e0c0f0003", "destination_id": "6b7a3c1e-0004-4c1a-9a51-0e5e0c0f0004" }
+  ],
+  "actions": [
+    {
+      "id": "6b7a3c1e-0001-4c1a-9a51-0e5e0c0f0001",
+      "app_name": "http",
+      "app_version": "__HTTP_APP_VERSION__",
+      "app_id": "__HTTP_APP_ID__",
+      "name": "POST",
+      "label": "misp_lookup",
+      "environment": "Shuffle",
+      "is_valid": true,
+      "isStartNode": true,
+      "position": { "x": 250, "y": 0 },
+      "parameters": [
+        { "name": "url", "value": "http://misp/attributes/restSearch", "required": true },
+        { "name": "headers", "value": "Authorization: __MISP_API_KEY__\nAccept: application/json\nContent-Type: application/json", "multiline": true },
+        { "name": "body", "value": "{\"returnFormat\": \"json\", \"value\": [\"$exec.all_fields.data.src_ip\", \"$exec.all_fields.data.dest_ip\", \"$exec.all_fields.data.http.hostname\", \"$exec.all_fields.data.dns.rrname\", \"$exec.all_fields.data.tls.sni\"], \"to_ids\": 1, \"limit\": 5}", "multiline": true },
+        { "name": "username", "value": "" },
+        { "name": "password", "value": "" },
+        { "name": "verify", "value": "false" },
+        { "name": "http_proxy", "value": "" },
+        { "name": "https_proxy", "value": "" },
+        { "name": "timeout", "value": "30" },
+        { "name": "to_file", "value": "false" }
+      ]
+    },
+    {
+      "id": "6b7a3c1e-0002-4c1a-9a51-0e5e0c0f0002",
+      "app_name": "http",
+      "app_version": "__HTTP_APP_VERSION__",
+      "app_id": "__HTTP_APP_ID__",
+      "name": "POST",
+      "label": "misp_sighting",
+      "environment": "Shuffle",
+      "is_valid": true,
+      "position": { "x": 500, "y": 0 },
+      "parameters": [
+        { "name": "url", "value": "http://misp/sightings/add", "required": true },
+        { "name": "headers", "value": "Authorization: __MISP_API_KEY__\nAccept: application/json\nContent-Type: application/json", "multiline": true },
+        { "name": "body", "value": "{\"values\": [\"$exec.all_fields.data.src_ip\", \"$exec.all_fields.data.dest_ip\", \"$exec.all_fields.data.http.hostname\", \"$exec.all_fields.data.dns.rrname\", \"$exec.all_fields.data.tls.sni\"], \"source\": \"OpenSOC Wazuh alert $exec.id\", \"type\": \"0\"}", "multiline": true },
+        { "name": "username", "value": "" },
+        { "name": "password", "value": "" },
+        { "name": "verify", "value": "false" },
+        { "name": "http_proxy", "value": "" },
+        { "name": "https_proxy", "value": "" },
+        { "name": "timeout", "value": "30" },
+        { "name": "to_file", "value": "false" }
+      ]
+    },
+    {
+      "id": "6b7a3c1e-0003-4c1a-9a51-0e5e0c0f0003",
+      "app_name": "http",
+      "app_version": "__HTTP_APP_VERSION__",
+      "app_id": "__HTTP_APP_ID__",
+      "name": "POST",
+      "label": "thehive_alert",
+      "environment": "Shuffle",
+      "is_valid": true,
+      "position": { "x": 750, "y": 0 },
+      "parameters": [
+        { "name": "url", "value": "http://thehive:9000/api/v1/alert", "required": true },
+        { "name": "headers", "value": "Authorization: Bearer __THEHIVE_API_KEY__\nContent-Type: application/json\nX-Organisation: __THEHIVE_ORG__", "multiline": true },
+        { "name": "body", "value": "{\"type\": \"misp-sighting\", \"source\": \"shuffle\", \"sourceRef\": \"wazuh-$exec.id\", \"title\": \"[Shuffle] $exec.title\", \"severity\": 3, \"tlp\": 2, \"pap\": 2, \"tags\": [\"shuffle\", \"misp\", \"wazuh:rule=$exec.rule_id\", \"opensoc:playbook=misp-ioc-triage\"], \"description\": \"Wazuh alert `$exec.id` (rule $exec.rule_id) matched an indicator published in MISP.\\n\\n- MISP event: #$misp_lookup.body.response.Attribute.#0.event_id - $misp_lookup.body.response.Attribute.#0.Event.info\\n- Indicator: $misp_lookup.body.response.Attribute.#0.type $misp_lookup.body.response.Attribute.#0.value (category $misp_lookup.body.response.Attribute.#0.category)\\n- MISP sighting recorded: HTTP $misp_sighting.status\\n- Wazuh agent: $exec.all_fields.agent.name\\n- Suricata signature: $exec.all_fields.data.alert.signature\", \"observables\": [{\"dataType\": \"ip\", \"data\": \"$exec.all_fields.data.src_ip\", \"message\": \"Source IP\", \"tags\": [\"misp\"]}, {\"dataType\": \"ip\", \"data\": \"$exec.all_fields.data.dest_ip\", \"message\": \"Destination IP\", \"tags\": [\"misp\"]}]}", "multiline": true },
+        { "name": "username", "value": "" },
+        { "name": "password", "value": "" },
+        { "name": "verify", "value": "false" },
+        { "name": "http_proxy", "value": "" },
+        { "name": "https_proxy", "value": "" },
+        { "name": "timeout", "value": "30" },
+        { "name": "to_file", "value": "false" }
+      ]
+    },
+    {
+      "id": "6b7a3c1e-0004-4c1a-9a51-0e5e0c0f0004",
+      "app_name": "http",
+      "app_version": "__HTTP_APP_VERSION__",
+      "app_id": "__HTTP_APP_ID__",
+      "name": "POST",
+      "label": "thehive_case",
+      "environment": "Shuffle",
+      "is_valid": true,
+      "position": { "x": 1000, "y": 0 },
+      "parameters": [
+        { "name": "url", "value": "http://thehive:9000/api/v1/alert/$thehive_alert.body._id/case", "required": true },
+        { "name": "headers", "value": "Authorization: Bearer __THEHIVE_API_KEY__\nContent-Type: application/json\nX-Organisation: __THEHIVE_ORG__", "multiline": true },
+        { "name": "body", "value": "{}", "multiline": true },
+        { "name": "username", "value": "" },
+        { "name": "password", "value": "" },
+        { "name": "verify", "value": "false" },
+        { "name": "http_proxy", "value": "" },
+        { "name": "https_proxy", "value": "" },
+        { "name": "timeout", "value": "30" },
+        { "name": "to_file", "value": "false" }
+      ]
+    }
+  ]
+}

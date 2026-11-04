@@ -1,0 +1,10 @@
+# OpenSearch node used only by Shuffle (workflows, executions, apps).
+# Reachable exclusively from the internal "data" Docker network.
+network.host: "0.0.0.0"
+node.name: "shuffle-opensearch"
+cluster.name: "shuffle"
+path.data: /var/lib/wazuh-indexer
+path.logs: /var/log/wazuh-indexer
+discovery.type: single-node
+plugins.security.disabled: true
+cluster.routing.allocation.disk.threshold_enabled: false
