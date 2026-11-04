@@ -1,0 +1,43 @@
+title: Linux Audit Subsystem Disabled Or Rules Deleted
+id: 7a5e1b8d-e331-4782-a063-bc3eb578c1cb
+status: test
+description: Detects attempts to blind the Linux audit system by disabling auditing (auditctl -e 0), deleting all audit rules (auditctl -D) or stopping the auditd service.
+references:
+  - https://attack.mitre.org/techniques/T1685/004/
+  - https://man7.org/linux/man-pages/man8/auditctl.8.html
+author: OpenSOC Detection Engineering
+date: 2026-11-04
+tags:
+  - attack.defense-impairment
+  - attack.t1685.004
+logsource:
+  product: linux
+  service: auditd
+  definition: 'Requirements: execve syscalls must be audited (e.g. -a always,exit -F arch=b64 -S execve -k exec)'
+detection:
+  selection_auditctl_disable:
+    type: 'EXECVE'
+    a0|re: '(^|/)auditctl$'
+    a1: '-e'
+    a2: 0
+  selection_auditctl_delete:
+    type: 'EXECVE'
+    a0|re: '(^|/)auditctl$'
+    a1: '-D'
+  selection_systemctl:
+    type: 'EXECVE'
+    a0|re: '(^|/)systemctl$'
+    a1:
+      - 'stop'
+      - 'disable'
+      - 'mask'
+    a2|re: '^auditd(\.service)?$'
+  selection_service:
+    type: 'EXECVE'
+    a0|re: '(^|/)service$'
+    a1: 'auditd'
+    a2: 'stop'
+  condition: 1 of selection_*
+falsepositives:
+  - Planned maintenance of the audit configuration (auditctl -D is also used at the top of rule files loaded by augenrules)
+level: high

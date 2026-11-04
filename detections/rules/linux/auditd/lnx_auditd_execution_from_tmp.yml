@@ -1,0 +1,36 @@
+title: Program Executed From Temporary Directory
+id: 56e5de9f-637d-47ba-ba61-1659a5d3123d
+status: test
+description: Detects execution of a program located in world-writable temporary directories (/tmp, /var/tmp, /dev/shm), a common staging location for downloaded implants and exploits.
+references:
+  - https://attack.mitre.org/techniques/T1036/
+  - https://attack.mitre.org/techniques/T1059/004/
+author: OpenSOC Detection Engineering
+date: 2026-11-04
+tags:
+  - attack.stealth
+  - attack.t1036
+  - attack.execution
+  - attack.t1059.004
+logsource:
+  product: linux
+  service: auditd
+  definition: 'Requirements: execve syscalls must be audited (e.g. -a always,exit -F arch=b64 -S execve -k exec)'
+detection:
+  selection_absolute:
+    type: 'EXECVE'
+    a0|startswith:
+      - '/tmp/'
+      - '/var/tmp/'
+      - '/dev/shm/'
+  selection_relative:
+    type: 'EXECVE'
+    a0|startswith: './'
+    cwd|startswith:
+      - '/tmp'
+      - '/var/tmp'
+      - '/dev/shm'
+  condition: 1 of selection_*
+falsepositives:
+  - Software installers and build systems that unpack and run helpers from /tmp
+level: medium

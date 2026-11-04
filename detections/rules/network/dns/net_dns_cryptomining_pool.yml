@@ -1,0 +1,31 @@
+title: DNS Query For Cryptocurrency Mining Pool
+id: b994ff92-38aa-46f5-afec-b176da258ab7
+status: test
+description: Detects DNS resolution of well-known cryptocurrency mining pools, typical of cryptojacking malware on servers, containers and workstations.
+references:
+  - https://attack.mitre.org/techniques/T1496/
+author: OpenSOC Detection Engineering
+date: 2026-11-04
+tags:
+  - attack.impact
+  - attack.t1496
+logsource:
+  category: dns
+detection:
+  selection:
+    query|contains:
+      - 'minexmr.com'
+      - 'xmrpool.'
+      - 'nanopool.org'
+      - 'supportxmr.com'
+      - 'moneroocean.stream'
+      - 'hashvault.pro'
+      - 'f2pool.com'
+      - '2miners.com'
+      - 'herominers.com'
+      - 'c3pool.com'
+      - 'unmineable.com'
+  condition: selection
+falsepositives:
+  - Research or sanctioned mining hosts (uncommon in corporate networks)
+level: high

@@ -1,0 +1,32 @@
+title: Domain Trust Or Domain Controller Discovery With Nltest
+id: 70244858-911b-4f4e-99d1-ad47df64ee20
+status: test
+description: Detects nltest.exe enumerating domain trusts, domain controllers or the PDC, an early step of Active Directory reconnaissance used by ransomware operators and red teams.
+references:
+  - https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-server-2012-r2-and-2012/cc731935(v=ws.11)
+  - https://attack.mitre.org/techniques/T1482/
+author: OpenSOC Detection Engineering
+date: 2026-11-04
+tags:
+  - attack.discovery
+  - attack.t1482
+  - attack.t1018
+logsource:
+  category: process_creation
+  product: windows
+detection:
+  selection_img:
+    - Image|endswith: '\nltest.exe'
+    - OriginalFileName: 'nltestrk.exe'
+  selection_cli:
+    CommandLine|contains|windash:
+      - ' -domain_trusts'
+      - ' -all_trusts'
+      - ' -trusted_domains'
+      - ' -dclist:'
+      - ' -dsgetdc:'
+      - ' -parentdomain'
+  condition: all of selection_*
+falsepositives:
+  - Domain administrators troubleshooting trust relationships or DC location
+level: medium

@@ -1,0 +1,33 @@
+title: Exchange Online Mailbox Forwarding Or Redirect Rule Created
+id: 07663449-6210-47ff-91bd-3bc731852307
+status: test
+description: Detects inbox rules or mailbox settings that forward or redirect mail, used after account takeover to exfiltrate email and hide replies (BEC).
+references:
+  - https://learn.microsoft.com/en-us/defender-office-365/outbound-spam-policies-external-email-forwarding
+  - https://attack.mitre.org/techniques/T1114/003/
+author: OpenSOC Detection Engineering
+date: 2026-11-04
+tags:
+  - attack.collection
+  - attack.t1114.003
+logsource:
+  product: m365
+  service: audit
+detection:
+  selection_inbox_rule:
+    Operation:
+      - 'New-InboxRule'
+      - 'Set-InboxRule'
+    Parameters|contains:
+      - 'ForwardTo'
+      - 'ForwardAsAttachmentTo'
+      - 'RedirectTo'
+  selection_mailbox:
+    Operation: 'Set-Mailbox'
+    Parameters|contains:
+      - 'ForwardingSmtpAddress'
+      - 'ForwardingAddress'
+  condition: 1 of selection_*
+falsepositives:
+  - Users forwarding mail to a delegate or shared mailbox inside the organization
+level: high

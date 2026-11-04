@@ -1,0 +1,29 @@
+rule_id: 011360ed-1d3e-4fd7-b545-d9ea296b45f0
+cases:
+  - name: comsvcs MiniDump of LSASS (pid 652)
+    expect: match
+    event:
+      Image: 'C:\Windows\System32\rundll32.exe'
+      OriginalFileName: 'RUNDLL32.EXE'
+      CommandLine: 'rundll32.exe C:\Windows\System32\comsvcs.dll, MiniDump 652 C:\Windows\Temp\lsass.dmp full'
+      ParentImage: 'C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe'
+      User: 'NT AUTHORITY\SYSTEM'
+      IntegrityLevel: System
+  - name: Export called by ordinal from a renamed rundll32
+    expect: match
+    event:
+      Image: 'C:\Users\Public\r.exe'
+      OriginalFileName: 'RUNDLL32.EXE'
+      CommandLine: 'r.exe comsvcs.dll #24 652 C:\Users\Public\out.bin full'
+      ParentImage: 'C:\Windows\System32\cmd.exe'
+      User: 'NT AUTHORITY\SYSTEM'
+      IntegrityLevel: System
+  - name: rundll32 opening the printer UI
+    expect: no_match
+    event:
+      Image: 'C:\Windows\System32\rundll32.exe'
+      OriginalFileName: 'RUNDLL32.EXE'
+      CommandLine: 'rundll32.exe printui.dll,PrintUIEntry /il'
+      ParentImage: 'C:\Windows\explorer.exe'
+      User: 'OPENSOC\jdoe'
+      IntegrityLevel: Medium

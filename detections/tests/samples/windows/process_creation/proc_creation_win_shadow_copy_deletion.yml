@@ -1,0 +1,30 @@
+rule_id: 0350899d-4993-4459-918b-b89e5e8c69c0
+cases:
+  - name: vssadmin deleting all shadow copies
+    expect: match
+    event:
+      Image: 'C:\Windows\System32\vssadmin.exe'
+      CommandLine: 'vssadmin.exe delete shadows /all /quiet'
+      ParentImage: 'C:\Windows\System32\cmd.exe'
+      User: 'NT AUTHORITY\SYSTEM'
+  - name: wmic shadowcopy delete
+    expect: match
+    event:
+      Image: 'C:\Windows\System32\wbem\WMIC.exe'
+      CommandLine: 'wmic shadowcopy delete /nointeractive'
+      ParentImage: 'C:\Windows\System32\cmd.exe'
+      User: 'NT AUTHORITY\SYSTEM'
+  - name: bcdedit disabling recovery
+    expect: match
+    event:
+      Image: 'C:\Windows\System32\bcdedit.exe'
+      CommandLine: 'bcdedit /set {default} recoveryenabled No'
+      ParentImage: 'C:\Windows\System32\cmd.exe'
+      User: 'NT AUTHORITY\SYSTEM'
+  - name: vssadmin listing shadow copies
+    expect: no_match
+    event:
+      Image: 'C:\Windows\System32\vssadmin.exe'
+      CommandLine: 'vssadmin.exe list shadows'
+      ParentImage: 'C:\Windows\System32\cmd.exe'
+      User: 'OPENSOC\admin'

@@ -1,0 +1,29 @@
+rule_id: efbb075a-1d4d-41d6-8aa2-ec759f25e738
+cases:
+  - name: Hidden PowerShell with Base64 encoded payload
+    expect: match
+    event:
+      Image: 'C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe'
+      OriginalFileName: 'PowerShell.EXE'
+      CommandLine: 'powershell.exe -NoProfile -WindowStyle Hidden -enc SQBFAFgAIAAoAE4AZQB3AC0ATwBiAGoAZQBjAHQAIABOAGUAdAAuAFcAZQBiAEMAbABpAGUAbgB0ACkA'
+      ParentImage: 'C:\Windows\explorer.exe'
+      User: 'OPENSOC\jdoe'
+      IntegrityLevel: Medium
+  - name: Renamed PowerShell binary (matched by OriginalFileName) using /EncodedCommand abbreviation
+    expect: match
+    event:
+      Image: 'C:\Users\Public\svchost32.exe'
+      OriginalFileName: 'PowerShell.EXE'
+      CommandLine: 'svchost32.exe /enco SQBFAFgA'
+      ParentImage: 'C:\Windows\System32\cmd.exe'
+      User: 'OPENSOC\jdoe'
+      IntegrityLevel: Medium
+  - name: Administrator running a signed script file
+    expect: no_match
+    event:
+      Image: 'C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe'
+      OriginalFileName: 'PowerShell.EXE'
+      CommandLine: 'powershell.exe -NoProfile -ExecutionPolicy AllSigned -File C:\Scripts\Backup-Shares.ps1'
+      ParentImage: 'C:\Windows\System32\svchost.exe'
+      User: 'OPENSOC\svc_backup'
+      IntegrityLevel: High

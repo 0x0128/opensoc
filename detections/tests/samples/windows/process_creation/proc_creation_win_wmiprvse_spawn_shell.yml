@@ -1,0 +1,16 @@
+rule_id: c3da172c-743c-4aeb-aa03-8a2cbf7d003b
+cases:
+  - name: wmiexec-style remote command
+    expect: match
+    event:
+      Image: 'C:\Windows\System32\cmd.exe'
+      CommandLine: 'cmd.exe /Q /c cd \ 1> \\127.0.0.1\ADMIN$\__1730714400.12 2>&1'
+      ParentImage: 'C:\Windows\System32\wbem\WmiPrvSE.exe'
+      User: 'OPENSOC\admin'
+  - name: WMI provider host starting a WMI ADAP helper
+    expect: no_match
+    event:
+      Image: 'C:\Windows\System32\wbem\WMIADAP.exe'
+      CommandLine: 'wmiadap.exe /F /T /R'
+      ParentImage: 'C:\Windows\System32\wbem\WmiPrvSE.exe'
+      User: 'NT AUTHORITY\SYSTEM'

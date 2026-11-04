@@ -1,0 +1,18 @@
+rule_id: a5a8d1e8-8f6c-4aee-ab85-5c8f0b5c2b48
+cases:
+  - name: IFM snapshot written to a temp folder
+    expect: match
+    event:
+      Image: 'C:\Windows\System32\ntdsutil.exe'
+      OriginalFileName: 'ntdsutil.exe'
+      CommandLine: 'ntdsutil "ac i ntds" "ifm" "create full c:\temp\ntds_dump" q q'
+      ParentImage: 'C:\Windows\System32\cmd.exe'
+      User: 'OPENSOC\admin'
+  - name: ntdsutil metadata cleanup
+    expect: no_match
+    event:
+      Image: 'C:\Windows\System32\ntdsutil.exe'
+      OriginalFileName: 'ntdsutil.exe'
+      CommandLine: 'ntdsutil "metadata cleanup" "connections" quit'
+      ParentImage: 'C:\Windows\System32\cmd.exe'
+      User: 'OPENSOC\admin'

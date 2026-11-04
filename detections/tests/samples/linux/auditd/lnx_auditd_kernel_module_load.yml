@@ -1,0 +1,24 @@
+rule_id: 77265f15-712d-4270-8b98-8788d3d5e85f
+cases:
+  - name: Rootkit module loaded from /tmp
+    expect: match
+    event:
+      type: EXECVE
+      a0: insmod
+      a1: /tmp/diamorphine.ko
+      comm: insmod
+      exe: /usr/sbin/insmod
+      uid: 0
+      key: exec
+  - name: Kernel auto-loading a module by name
+    expect: no_match
+    event:
+      type: EXECVE
+      a0: /sbin/modprobe
+      a1: '-q'
+      a2: '--'
+      a3: net-pf-10
+      comm: modprobe
+      exe: /usr/bin/kmod
+      uid: 0
+      key: exec

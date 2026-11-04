@@ -1,0 +1,24 @@
+rule_id: 393255ed-95b2-46a7-87c0-1cf0ec50415a
+cases:
+  - name: sekurlsa::pth NewCredentials logon
+    expect: match
+    event:
+      EventID: 4624
+      LogonType: 9
+      LogonProcessName: 'seclogo'
+      AuthenticationPackageName: 'Negotiate'
+      TargetUserName: 'jdoe'
+      TargetDomainName: 'OPENSOC'
+      ProcessName: 'C:\Windows\System32\svchost.exe'
+      IpAddress: '::1'
+  - name: Interactive logon at the console
+    expect: no_match
+    event:
+      EventID: 4624
+      LogonType: 2
+      LogonProcessName: 'User32'
+      AuthenticationPackageName: 'Negotiate'
+      TargetUserName: 'jdoe'
+      TargetDomainName: 'OPENSOC'
+      ProcessName: 'C:\Windows\System32\svchost.exe'
+      IpAddress: '127.0.0.1'

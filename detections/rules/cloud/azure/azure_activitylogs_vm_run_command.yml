@@ -1,0 +1,25 @@
+title: Azure Virtual Machine Run Command Executed
+id: 4df36710-397d-4f45-a7e7-b76550d651da
+status: test
+description: Detects Run Command being invoked on Azure virtual machines or scale set instances, which executes arbitrary scripts as SYSTEM/root through the VM agent.
+references:
+  - https://learn.microsoft.com/en-us/azure/virtual-machines/run-command-overview
+  - https://attack.mitre.org/techniques/T1651/
+author: OpenSOC Detection Engineering
+date: 2026-11-04
+tags:
+  - attack.execution
+  - attack.t1651
+logsource:
+  product: azure
+  service: activitylogs
+detection:
+  selection:
+    operationName:
+      - 'MICROSOFT.COMPUTE/VIRTUALMACHINES/RUNCOMMAND/ACTION'
+      - 'MICROSOFT.COMPUTE/VIRTUALMACHINES/RUNCOMMANDS/WRITE'
+      - 'MICROSOFT.COMPUTE/VIRTUALMACHINESCALESETS/VIRTUALMACHINES/RUNCOMMAND/ACTION'
+  condition: selection
+falsepositives:
+  - Administrators troubleshooting VMs without network access
+level: medium

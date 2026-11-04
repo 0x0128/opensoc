@@ -1,0 +1,24 @@
+rule_id: e0372a3a-caae-40b6-bd81-5fecbe2c2f25
+cases:
+  - name: Encoded traversal to /etc/passwd
+    expect: match
+    event:
+      src_ip: 198.51.100.200
+      dst_ip: 10.10.0.22
+      dst_port: 80
+      cs-host: files.opensoc.example
+      cs-method: GET
+      c-uri: '/download?file=..%2f..%2f..%2fetc%2fpasswd'
+      c-useragent: 'python-requests/2.32.3'
+      sc-status: 500
+  - name: Normal file download
+    expect: no_match
+    event:
+      src_ip: 10.20.30.40
+      dst_ip: 10.10.0.22
+      dst_port: 80
+      cs-host: files.opensoc.example
+      cs-method: GET
+      c-uri: '/download?file=reports/2026/q3.pdf'
+      c-useragent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 14_6) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Safari/605.1.15'
+      sc-status: 200

@@ -1,0 +1,44 @@
+title: Systemd Unit File Created Or Modified
+id: b2267c57-f347-407f-b0cd-3f37f7d7aa56
+status: test
+description: Detects writes to systemd service or timer unit files in system and user unit directories, used to persist implants that start at boot or on a schedule.
+references:
+  - https://attack.mitre.org/techniques/T1543/002/
+  - https://attack.mitre.org/techniques/T1053/006/
+author: OpenSOC Detection Engineering
+date: 2026-11-04
+tags:
+  - attack.persistence
+  - attack.privilege-escalation
+  - attack.t1543.002
+  - attack.execution
+  - attack.t1053.006
+logsource:
+  product: linux
+  service: auditd
+  definition: 'Requirements: watch rules on unit directories (e.g. -w /etc/systemd/system/ -p wa -k systemd)'
+detection:
+  selection_dir:
+    type: 'PATH'
+    name|contains:
+      - '/etc/systemd/system/'
+      - '/usr/lib/systemd/system/'
+      - '/lib/systemd/system/'
+      - '/run/systemd/system/'
+      - '/.config/systemd/user/'
+  selection_unit:
+    name|endswith:
+      - '.service'
+      - '.timer'
+  filter_main_package_managers:
+    comm|startswith:
+      - 'dpkg'
+      - 'rpm'
+      - 'yum'
+      - 'dnf'
+      - 'apt'
+      - 'unattended'
+  condition: all of selection_* and not 1 of filter_main_*
+falsepositives:
+  - Software installed outside the package manager (vendor install scripts, containers runtimes)
+level: medium

@@ -1,0 +1,376 @@
+# OpenSOC - Sigma logsource -> Wazuh mapping
+# ---------------------------------------------------------------------------
+# Single source of truth used by:
+#   * the pySigma processing pipeline (field renaming)   -> opensoc_detections/wazuh/pipeline.py
+#   * the Wazuh backend (parent rule, anchor conditions) -> opensoc_detections/wazuh/backend.py
+#   * the test renderer that turns a normalized sample event into the raw
+#     input Wazuh receives                               -> opensoc_detections/wazuh/render.py
+#
+# Each entry:
+#   rule_prefix    Mandatory file name prefix of rules using this logsource.
+#   logsource      Sigma logsource it applies to (product/category/service). The most
+#                  specific matching entry wins.
+#   parent         How the generated rule hooks into the stock Wazuh ruleset:
+#                    if_sid: [..]       child of these stock rules
+#                    if_group: name     child of every rule in this group
+#                    decoded_as: name   root rule for this decoder
+#   anchor         Extra <field> conditions (Wazuh field -> PCRE2) added to every
+#                  generated rule so it only evaluates the intended events.
+#   fields.map     Explicit Sigma field -> Wazuh field mapping.
+#   fields.default Template for unmapped fields ({field} = Sigma name, {lcfirst} = Sigma
+#                  name with first letter lower-cased, as the Wazuh EventChannel decoder
+#                  does). Omit it to make the mapping strict (unknown fields fail).
+#   fields.drop    Sigma fields removed before conversion (see comments).
+#   keywords       true if keyword (field-less) detections are allowed. They become a
+#                  <regex type="pcre2"> on the event message.
+#   options        Wazuh <options> for generated rules.
+#   render         How tests build the raw event fed to wazuh-logtest:
+#                    format: json | audit | syslog
+#                    envelope: static JSON skeleton merged under the mapped fields
+#                    location: logtest "location" value
+# ---------------------------------------------------------------------------
+
+windows_eventdata: &windows_fields
+  default: "win.eventdata.{lcfirst}"
+  map:
+    EventID: win.system.eventID
+    Channel: win.system.channel
+    Provider_Name: win.system.providerName
+    Computer: win.system.computer
+
+logsources:
+  # ----------------------------------------------------------------- Windows
+  - id: windows_process_creation
+    rule_prefix: proc_creation_win_
+    logsource: {product: windows, category: process_creation}
+    description: Sysmon Event ID 1 (Process creation)
+    parent: {if_sid: [61603]}
+    fields: *windows_fields
+    options: [no_full_log]
+    render:
+      format: json
+      location: EventChannel
+      envelope:
+        win:
+          system: {providerName: Microsoft-Windows-Sysmon, channel: Microsoft-Windows-Sysmon/Operational, eventID: "1", severityValue: INFORMATION, computer: WS01.opensoc.local}
+
+  - id: windows_network_connection
+    rule_prefix: net_connection_win_
+    logsource: {product: windows, category: network_connection}
+    description: Sysmon Event ID 3 (Network connection)
+    parent: {if_sid: [61605]}
+    fields: *windows_fields
+    options: [no_full_log]
+    render:
+      format: json
+      location: EventChannel
+      envelope:
+        win:
+          system: {providerName: Microsoft-Windows-Sysmon, channel: Microsoft-Windows-Sysmon/Operational, eventID: "3", severityValue: INFORMATION, computer: WS01.opensoc.local}
+
+  - id: windows_process_access
+    rule_prefix: proc_access_win_
+    logsource: {product: windows, category: process_access}
+    description: Sysmon Event ID 10 (Process accessed)
+    parent: {if_sid: [61612]}
+    fields: *windows_fields
+    options: [no_full_log]
+    render:
+      format: json
+      location: EventChannel
+      envelope:
+        win:
+          system: {providerName: Microsoft-Windows-Sysmon, channel: Microsoft-Windows-Sysmon/Operational, eventID: "10", severityValue: INFORMATION, computer: WS01.opensoc.local}
+
+  - id: windows_file_event
+    rule_prefix: file_event_win_
+    logsource: {product: windows, category: file_event}
+    description: Sysmon Event ID 11 (File created)
+    parent: {if_sid: [61613]}
+    fields: *windows_fields
+    options: [no_full_log]
+    render:
+      format: json
+      location: EventChannel
+      envelope:
+        win:
+          system: {providerName: Microsoft-Windows-Sysmon, channel: Microsoft-Windows-Sysmon/Operational, eventID: "11", severityValue: INFORMATION, computer: WS01.opensoc.local}
+
+  - id: windows_registry_set
+    rule_prefix: registry_set_win_
+    logsource: {product: windows, category: registry_set}
+    description: Sysmon Event ID 13 (Registry value set)
+    parent: {if_sid: [61615]}
+    fields: *windows_fields
+    options: [no_full_log]
+    render:
+      format: json
+      location: EventChannel
+      envelope:
+        win:
+          system: {providerName: Microsoft-Windows-Sysmon, channel: Microsoft-Windows-Sysmon/Operational, eventID: "13", severityValue: INFORMATION, computer: WS01.opensoc.local}
+
+  - id: windows_ps_script
+    rule_prefix: posh_ps_
+    logsource: {product: windows, category: ps_script}
+    description: PowerShell Script Block Logging (Event ID 4104)
+    # Hooked directly under the Windows root rule and anchored on the channel, so the
+    # rule is reached whatever severity Windows assigns to the script block event.
+    parent: {if_sid: [60000]}
+    anchor:
+      win.system.channel: '^Microsoft-Windows-PowerShell/Operational$'
+      win.system.eventID: '^4104$'
+    fields: *windows_fields
+    options: [no_full_log]
+    render:
+      format: json
+      location: EventChannel
+      envelope:
+        win:
+          system: {providerName: Microsoft-Windows-PowerShell, channel: Microsoft-Windows-PowerShell/Operational, eventID: "4104", severityValue: VERBOSE, computer: WS01.opensoc.local}
+
+  - id: windows_security
+    rule_prefix: win_security_
+    logsource: {product: windows, service: security}
+    description: Windows Security event log
+    parent: {if_sid: [60001]}
+    fields: *windows_fields
+    options: [no_full_log]
+    render:
+      format: json
+      location: EventChannel
+      envelope:
+        win:
+          system: {providerName: Microsoft-Windows-Security-Auditing, channel: Security, severityValue: AUDIT_SUCCESS, computer: DC01.opensoc.local}
+
+  - id: windows_system
+    rule_prefix: win_system_
+    logsource: {product: windows, service: system}
+    description: Windows System event log
+    parent: {if_sid: [60002]}
+    fields: *windows_fields
+    options: [no_full_log]
+    render:
+      format: json
+      location: EventChannel
+      envelope:
+        win:
+          system: {providerName: Service Control Manager, channel: System, severityValue: INFORMATION, computer: WS01.opensoc.local}
+
+  # ------------------------------------------------------------------- Linux
+  - id: linux_auditd
+    rule_prefix: lnx_auditd_
+    logsource: {product: linux, service: auditd}
+    description: Linux auditd (Wazuh log_format audit, records of one event merged)
+    parent: {if_sid: [80700]}
+    fields:
+      map:
+        a0: audit.execve.a0
+        a1: audit.execve.a1
+        a2: audit.execve.a2
+        a3: audit.execve.a3
+        a4: audit.execve.a4
+        a5: audit.execve.a5
+        a6: audit.execve.a6
+        a7: audit.execve.a7
+        exe: audit.exe
+        comm: audit.command
+        key: audit.key
+        name: audit.file.name
+        cwd: audit.cwd
+        uid: audit.uid
+        auid: audit.auid
+        euid: audit.euid
+        syscall: audit.syscall
+        success: audit.success
+        tty: audit.tty
+      # Wazuh merges all records of an audit event (SYSCALL, EXECVE, CWD, PATH, ...)
+      # into one alert and only keeps the first record type in audit.type. A Sigma
+      # selection on the record type (type: EXECVE / PATH) is therefore implied by the
+      # presence of the record-specific fields (audit.execve.*, audit.file.name).
+      drop: [type]
+    render:
+      format: audit
+      location: /var/log/audit/audit.log
+
+  - id: linux_sshd
+    rule_prefix: lnx_sshd_
+    logsource: {product: linux, service: sshd}
+    description: OpenSSH server messages (syslog / journald)
+    parent: {if_sid: [5700]}
+    fields:
+      map: {}
+    keywords: true
+    render:
+      format: syslog
+      program: sshd
+      location: /var/log/auth.log
+
+  # ----------------------------------------------------------------- Network
+  - id: network_dns
+    rule_prefix: net_dns_
+    logsource: {category: dns}
+    description: DNS queries observed by Suricata (EVE JSON, event_type dns)
+    parent: {if_sid: [86603]}
+    fields:
+      map:
+        query: dns.rrname
+        record_type: dns.rrtype
+        src_ip: src_ip
+        dst_ip: dest_ip
+        src_port: src_port
+        dst_port: dest_port
+    options: [no_full_log]
+    render:
+      format: json
+      location: /var/log/suricata/eve.json
+      envelope: {timestamp: "2026-11-04T10:00:00.000000+0000", event_type: dns, proto: UDP, dns: {type: query, id: 4242}}
+
+  - id: network_proxy
+    rule_prefix: net_proxy_
+    logsource: {category: proxy}
+    description: HTTP transactions observed by Suricata (EVE JSON, event_type http)
+    parent: {if_sid: [86602]}
+    fields:
+      map:
+        c-uri: http.url
+        c-useragent: http.http_user_agent
+        cs-host: http.hostname
+        cs-method: http.http_method
+        sc-status: http.status
+        cs-referrer: http.http_refer
+        src_ip: src_ip
+        dst_ip: dest_ip
+        dst_port: dest_port
+    options: [no_full_log]
+    render:
+      format: json
+      location: /var/log/suricata/eve.json
+      envelope: {timestamp: "2026-11-04T10:00:00.000000+0000", event_type: http, proto: TCP, http: {protocol: HTTP/1.1}}
+
+  - id: network_firewall
+    rule_prefix: net_firewall_
+    logsource: {category: firewall}
+    description: Network flows observed by Suricata (EVE JSON, event_type flow)
+    parent: {if_sid: [86600]}
+    anchor:
+      event_type: '^flow$'
+    fields:
+      map:
+        src_ip: src_ip
+        dst_ip: dest_ip
+        src_port: src_port
+        dst_port: dest_port
+        protocol: proto
+        app_protocol: app_proto
+    options: [no_full_log]
+    render:
+      format: json
+      location: /var/log/suricata/eve.json
+      envelope: {timestamp: "2026-11-04T10:00:00.000000+0000", event_type: flow, flow: {state: established, reason: timeout}}
+
+  # ------------------------------------------------------------------- Cloud
+  - id: aws_cloudtrail
+    rule_prefix: aws_cloudtrail_
+    logsource: {product: aws, service: cloudtrail}
+    description: AWS CloudTrail via the Wazuh aws-s3 module
+    parent: {if_sid: [80200]}
+    anchor:
+      aws.source: '^cloudtrail$'
+    fields:
+      default: "aws.{field}"
+      map: {}
+    options: [no_full_log]
+    render:
+      format: json
+      location: Wazuh-AWS
+      envelope:
+        integration: aws
+        aws: {source: cloudtrail, eventVersion: "1.09", awsRegion: us-east-1, recipientAccountId: "111122223333"}
+
+  - id: azure_activitylogs
+    rule_prefix: azure_activitylogs_
+    logsource: {product: azure, service: activitylogs}
+    description: Azure Activity log (Log Analytics AzureActivity table, Wazuh azure-logs module)
+    parent: {if_sid: [87810]}
+    fields:
+      map:
+        operationName: OperationNameValue
+        status: ActivityStatusValue
+        caller: Caller
+        callerIpAddress: CallerIpAddress
+        resourceId: ResourceId
+        category: CategoryValue
+    options: [no_full_log]
+    render:
+      format: json
+      location: Azure
+      envelope: {azure_tag: azure-log-analytics, Type: AzureActivity, TenantId: 00000000-0000-0000-0000-000000000000}
+
+  - id: azure_signinlogs
+    rule_prefix: azure_signinlogs_
+    logsource: {product: azure, service: signinlogs}
+    description: Entra ID sign-in logs (Log Analytics SigninLogs table, Wazuh azure-logs module)
+    parent: {if_sid: [87801]}
+    anchor:
+      Type: '^SigninLogs$'
+    fields:
+      default: "{field}"
+      map: {}
+    options: [no_full_log]
+    render:
+      format: json
+      location: Azure
+      envelope: {azure_tag: azure-log-analytics, Type: SigninLogs}
+
+  - id: azure_auditlogs
+    rule_prefix: azure_auditlogs_
+    logsource: {product: azure, service: auditlogs}
+    description: Entra ID audit logs (Log Analytics AuditLogs table, Wazuh azure-logs module)
+    parent: {if_sid: [87801]}
+    anchor:
+      Type: '^AuditLogs$'
+    fields:
+      default: "{field}"
+      map: {}
+    options: [no_full_log]
+    render:
+      format: json
+      location: Azure
+      envelope: {azure_tag: azure-log-analytics, Type: AuditLogs}
+
+  - id: gcp_audit
+    rule_prefix: gcp_audit_
+    logsource: {product: gcp, service: gcp.audit}
+    description: GCP Cloud Audit Logs via the Wazuh gcp-pubsub module
+    parent: {if_sid: [65000]}
+    fields:
+      default: "gcp.{field}"
+      map:
+        gcp.audit.method_name: gcp.protoPayload.methodName
+        gcp.audit.service_name: gcp.protoPayload.serviceName
+        gcp.audit.resource_name: gcp.protoPayload.resourceName
+        gcp.audit.principal_email: gcp.protoPayload.authenticationInfo.principalEmail
+    options: [no_full_log]
+    render:
+      format: json
+      location: Wazuh-GCloud
+      envelope:
+        integration: gcp
+        gcp: {logName: projects/opensoc-prod/logs/cloudaudit.googleapis.com%2Factivity, severity: NOTICE, resource: {type: project}}
+
+  - id: m365_audit
+    rule_prefix: m365_audit_
+    logsource: {product: m365, service: audit}
+    description: Microsoft 365 Unified Audit Log via the Wazuh office365 module
+    parent: {if_sid: [91531]}
+    fields:
+      default: "office365.{field}"
+      map: {}
+    options: [no_full_log]
+    render:
+      format: json
+      location: office365
+      envelope:
+        integration: office365
+        office365: {OrganizationId: 00000000-0000-0000-0000-000000000000, RecordType: 1}

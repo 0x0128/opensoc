@@ -1,0 +1,41 @@
+title: Service Installed With Suspicious Image Path
+id: a4c93706-ae2d-4141-8d56-32faa06fe205
+status: test
+description: Detects new services (Event ID 7045) whose binary path launches a script interpreter or LOLBin, lives in a user-writable folder or matches remote execution tooling (PsExec, Impacket smbexec).
+references:
+  - https://attack.mitre.org/techniques/T1543/003/
+  - https://attack.mitre.org/techniques/T1569/002/
+author: OpenSOC Detection Engineering
+date: 2026-11-04
+tags:
+  - attack.persistence
+  - attack.privilege-escalation
+  - attack.t1543.003
+  - attack.execution
+  - attack.t1569.002
+logsource:
+  product: windows
+  service: system
+detection:
+  selection:
+    Provider_Name: 'Service Control Manager'
+    EventID: 7045
+  selection_path:
+    ImagePath|contains:
+      - 'powershell'
+      - 'pwsh'
+      - 'cmd /c'
+      - 'cmd.exe /c'
+      - '%COMSPEC%'
+      - 'mshta'
+      - 'rundll32'
+      - 'regsvr32'
+      - '\AppData\'
+      - '\Users\Public\'
+      - '\Windows\Temp\'
+      - 'PSEXESVC'
+      - '\ADMIN$\'
+  condition: all of selection*
+falsepositives:
+  - Remote administration tools used legitimately by IT (PsExec), documented per host
+level: high

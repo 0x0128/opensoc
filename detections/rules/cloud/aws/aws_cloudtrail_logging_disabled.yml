@@ -1,0 +1,29 @@
+title: AWS CloudTrail Logging Stopped Or Trail Modified
+id: 3e8d3750-a795-42ca-aa25-9d573e529065
+status: stable
+description: Detects API calls that stop, delete or reconfigure CloudTrail trails and event data stores, removing the audit trail of subsequent attacker actions.
+references:
+  - https://docs.aws.amazon.com/awscloudtrail/latest/APIReference/API_StopLogging.html
+  - https://attack.mitre.org/techniques/T1685/002/
+author: OpenSOC Detection Engineering
+date: 2026-11-04
+tags:
+  - attack.defense-impairment
+  - attack.t1685.002
+logsource:
+  product: aws
+  service: cloudtrail
+detection:
+  selection:
+    eventSource: 'cloudtrail.amazonaws.com'
+    eventName:
+      - 'StopLogging'
+      - 'DeleteTrail'
+      - 'UpdateTrail'
+      - 'PutEventSelectors'
+      - 'DeleteEventDataStore'
+      - 'StopEventDataStoreIngestion'
+  condition: selection
+falsepositives:
+  - Planned trail changes deployed through infrastructure as code (verify the pipeline role)
+level: high

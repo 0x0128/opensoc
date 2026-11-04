@@ -1,0 +1,31 @@
+title: Certutil Used To Download Or Decode Files
+id: 208404a0-90ff-45dc-b574-431caec36bfb
+status: test
+description: Detects certutil.exe abused to download files from a URL (urlcache / verifyctl) or to decode Base64/hex encoded payloads.
+references:
+  - https://lolbas-project.github.io/lolbas/Binaries/Certutil/
+  - https://attack.mitre.org/techniques/T1105/
+author: OpenSOC Detection Engineering
+date: 2026-11-04
+tags:
+  - attack.command-and-control
+  - attack.t1105
+  - attack.stealth
+  - attack.t1140
+logsource:
+  category: process_creation
+  product: windows
+detection:
+  selection_img:
+    - Image|endswith: '\certutil.exe'
+    - OriginalFileName: 'CertUtil.exe'
+  selection_cli:
+    CommandLine|contains|windash:
+      - ' -urlcache '
+      - ' -verifyctl '
+      - ' -decode '
+      - ' -decodehex '
+  condition: all of selection_*
+falsepositives:
+  - PKI administrators verifying CRL/AIA distribution points with -verifyctl
+level: high

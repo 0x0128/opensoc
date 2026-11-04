@@ -1,0 +1,43 @@
+title: Host Firewall Disabled Or Flushed
+id: 1ddb699e-098c-4fd2-bb64-5c2e4070cae0
+status: test
+description: Detects commands that disable ufw/firewalld/nftables or flush all iptables rules, removing host network protections before lateral movement or exfiltration.
+references:
+  - https://attack.mitre.org/techniques/T1686/
+author: OpenSOC Detection Engineering
+date: 2026-11-04
+tags:
+  - attack.defense-impairment
+  - attack.t1686
+logsource:
+  product: linux
+  service: auditd
+  definition: 'Requirements: execve syscalls must be audited (e.g. -a always,exit -F arch=b64 -S execve -k exec)'
+detection:
+  selection_ufw:
+    type: 'EXECVE'
+    a0|re: '(^|/)ufw$'
+    a1: 'disable'
+  selection_systemctl:
+    type: 'EXECVE'
+    a0|re: '(^|/)systemctl$'
+    a1:
+      - 'stop'
+      - 'disable'
+      - 'mask'
+    a2|re: '^(firewalld|ufw|nftables|iptables)(\.service)?$'
+  selection_iptables:
+    type: 'EXECVE'
+    a0|re: '(^|/)(iptables|ip6tables)$'
+    a1:
+      - '-F'
+      - '--flush'
+  selection_nft:
+    type: 'EXECVE'
+    a0|re: '(^|/)nft$'
+    a1: 'flush'
+    a2: 'ruleset'
+  condition: 1 of selection_*
+falsepositives:
+  - Administrators troubleshooting connectivity; hosts where the firewall is managed by another layer
+level: high

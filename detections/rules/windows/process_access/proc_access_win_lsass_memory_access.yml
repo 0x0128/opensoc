@@ -1,0 +1,37 @@
+title: Suspicious Process Access To LSASS Memory
+id: 8505ee25-87a8-429f-957f-ccb5f3eaefac
+status: test
+description: Detects a non-system process opening LSASS with access rights required to read its memory (credential dumping with Mimikatz, procdump, nanodump, custom MiniDumpWriteDump tooling...).
+references:
+  - https://attack.mitre.org/techniques/T1003/001/
+  - https://learn.microsoft.com/en-us/windows/win32/procthread/process-security-and-access-rights
+author: OpenSOC Detection Engineering
+date: 2026-11-04
+tags:
+  - attack.credential-access
+  - attack.t1003.001
+logsource:
+  category: process_access
+  product: windows
+detection:
+  selection:
+    TargetImage|endswith: '\lsass.exe'
+    GrantedAccess:
+      - '0x1010'
+      - '0x1410'
+      - '0x1438'
+      - '0x143a'
+      - '0x1f0fff'
+      - '0x1f1fff'
+      - '0x1f3fff'
+      - '0x1fffff'
+  filter_main_system:
+    SourceImage|startswith:
+      - 'C:\Windows\System32\'
+      - 'C:\Windows\SysWOW64\'
+      - 'C:\Program Files\Windows Defender\'
+      - 'C:\ProgramData\Microsoft\Windows Defender\Platform\'
+  condition: selection and not 1 of filter_main_*
+falsepositives:
+  - EDR, backup and monitoring agents installed outside the Windows folders (add them as filters)
+level: high

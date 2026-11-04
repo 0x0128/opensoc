@@ -1,0 +1,36 @@
+rule_id: 07663449-6210-47ff-91bd-3bc731852307
+cases:
+  - name: Inbox rule forwarding invoices to an external address
+    expect: match
+    event:
+      Operation: New-InboxRule
+      Workload: Exchange
+      RecordType: 1
+      ResultStatus: 'True'
+      UserId: cfo@opensoc.example
+      ClientIP: 45.141.84.12
+      Parameters:
+        - Name: Name
+          Value: .
+        - Name: SubjectOrBodyContainsWords
+          Value: invoice;payment
+        - Name: ForwardTo
+          Value: billing-dept@protonmail.example
+        - Name: DeleteMessage
+          Value: 'True'
+  - name: Inbox rule moving newsletters to a folder
+    expect: no_match
+    event:
+      Operation: New-InboxRule
+      Workload: Exchange
+      RecordType: 1
+      ResultStatus: 'True'
+      UserId: ana@opensoc.example
+      ClientIP: 198.51.100.10
+      Parameters:
+        - Name: Name
+          Value: Newsletters
+        - Name: From
+          Value: news@vendor.example
+        - Name: MoveToFolder
+          Value: Newsletters

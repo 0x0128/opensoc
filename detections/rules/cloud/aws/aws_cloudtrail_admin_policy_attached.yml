@@ -1,0 +1,31 @@
+title: AWS Administrator Managed Policy Attached To Principal
+id: ae34cce8-d994-459c-9118-d025a3e3807e
+status: test
+description: Detects AdministratorAccess, IAMFullAccess or PowerUserAccess managed policies being attached to a user, group or role, a fast way to escalate privileges or keep persistent admin access.
+references:
+  - https://docs.aws.amazon.com/IAM/latest/APIReference/API_AttachUserPolicy.html
+  - https://attack.mitre.org/techniques/T1098/003/
+author: OpenSOC Detection Engineering
+date: 2026-11-04
+tags:
+  - attack.persistence
+  - attack.privilege-escalation
+  - attack.t1098.003
+logsource:
+  product: aws
+  service: cloudtrail
+detection:
+  selection:
+    eventSource: 'iam.amazonaws.com'
+    eventName:
+      - 'AttachUserPolicy'
+      - 'AttachGroupPolicy'
+      - 'AttachRolePolicy'
+    requestParameters.policyArn|endswith:
+      - ':policy/AdministratorAccess'
+      - ':policy/IAMFullAccess'
+      - ':policy/PowerUserAccess'
+  condition: selection
+falsepositives:
+  - Approved role provisioning through infrastructure as code
+level: high

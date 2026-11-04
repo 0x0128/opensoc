@@ -1,0 +1,18 @@
+rule_id: 0cd92a11-a31c-45c0-b3f2-702862d898c2
+cases:
+  - name: Workstation authenticating to an external SMB server
+    expect: match
+    event:
+      src_ip: 192.168.10.23
+      src_port: 51234
+      dst_ip: 198.51.100.44
+      dst_port: 445
+      protocol: TCP
+  - name: Workstation mapping an internal file share
+    expect: no_match
+    event:
+      src_ip: 192.168.10.23
+      src_port: 51235
+      dst_ip: 172.20.1.15
+      dst_port: 445
+      protocol: TCP

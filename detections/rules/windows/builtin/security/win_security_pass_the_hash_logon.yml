@@ -1,0 +1,24 @@
+title: Pass-The-Hash Style Logon With Seclogo
+id: 393255ed-95b2-46a7-87c0-1cf0ec50415a
+status: test
+description: Detects a NewCredentials logon (type 9) through the seclogo logon process with the Negotiate package, produced by pass-the-hash tooling such as Mimikatz sekurlsa::pth.
+references:
+  - https://attack.mitre.org/techniques/T1550/002/
+author: OpenSOC Detection Engineering
+date: 2026-11-04
+tags:
+  - attack.lateral-movement
+  - attack.t1550.002
+logsource:
+  product: windows
+  service: security
+detection:
+  selection:
+    EventID: 4624
+    LogonType: 9
+    LogonProcessName: 'seclogo'
+    AuthenticationPackageName: 'Negotiate'
+  condition: selection
+falsepositives:
+  - Administrators using "runas /netonly", which produces the same logon pattern
+level: medium

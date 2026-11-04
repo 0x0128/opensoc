@@ -1,0 +1,27 @@
+title: AWS Root Account Console Login
+id: 7faa524a-f64a-4c05-9328-626f148198e6
+status: stable
+description: Detects a successful AWS Management Console login with the root user, which should only happen for the few tasks that require it.
+references:
+  - https://docs.aws.amazon.com/IAM/latest/UserGuide/root-user-tasks.html
+  - https://attack.mitre.org/techniques/T1078/004/
+author: OpenSOC Detection Engineering
+date: 2026-11-04
+tags:
+  - attack.initial-access
+  - attack.persistence
+  - attack.privilege-escalation
+  - attack.t1078.004
+logsource:
+  product: aws
+  service: cloudtrail
+detection:
+  selection:
+    eventSource: 'signin.amazonaws.com'
+    eventName: 'ConsoleLogin'
+    userIdentity.type: 'Root'
+    responseElements.ConsoleLogin: 'Success'
+  condition: selection
+falsepositives:
+  - Break-glass procedures and the handful of tasks that require the root user
+level: high

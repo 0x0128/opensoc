@@ -1,0 +1,27 @@
+title: Windows Event Log Cleared With Wevtutil
+id: 93777461-a692-4d9a-b45b-ca4d5e95d225
+status: test
+description: Detects wevtutil.exe clearing an event log (cl / clear-log), used to remove forensic evidence after an intrusion.
+references:
+  - https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/wevtutil
+  - https://attack.mitre.org/techniques/T1685/005/
+author: OpenSOC Detection Engineering
+date: 2026-11-04
+tags:
+  - attack.defense-impairment
+  - attack.t1685.005
+logsource:
+  category: process_creation
+  product: windows
+detection:
+  selection_img:
+    - Image|endswith: '\wevtutil.exe'
+    - OriginalFileName: 'wevtutil.exe'
+  selection_cli:
+    CommandLine|contains:
+      - ' cl '
+      - ' clear-log '
+  condition: all of selection_*
+falsepositives:
+  - Golden image preparation scripts that clear logs before sysprep
+level: high

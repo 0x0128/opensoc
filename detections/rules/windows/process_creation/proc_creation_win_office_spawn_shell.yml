@@ -1,0 +1,46 @@
+title: Office Application Spawning Script Interpreter Or LOLBin
+id: a18379ca-9800-4fc3-853a-378d12a382c7
+status: test
+description: Detects Microsoft Office applications spawning command interpreters or living-off-the-land binaries, the typical behaviour of malicious macros and document exploits.
+references:
+  - https://attack.mitre.org/techniques/T1566/001/
+  - https://attack.mitre.org/techniques/T1204/002/
+author: OpenSOC Detection Engineering
+date: 2026-11-04
+tags:
+  - attack.initial-access
+  - attack.t1566.001
+  - attack.execution
+  - attack.t1204.002
+logsource:
+  category: process_creation
+  product: windows
+detection:
+  selection_parent:
+    ParentImage|endswith:
+      - '\WINWORD.EXE'
+      - '\EXCEL.EXE'
+      - '\POWERPNT.EXE'
+      - '\OUTLOOK.EXE'
+      - '\MSACCESS.EXE'
+      - '\MSPUB.EXE'
+      - '\ONENOTE.EXE'
+      - '\VISIO.EXE'
+  selection_child:
+    Image|endswith:
+      - '\cmd.exe'
+      - '\powershell.exe'
+      - '\pwsh.exe'
+      - '\wscript.exe'
+      - '\cscript.exe'
+      - '\mshta.exe'
+      - '\rundll32.exe'
+      - '\regsvr32.exe'
+      - '\certutil.exe'
+      - '\bitsadmin.exe'
+      - '\msiexec.exe'
+      - '\schtasks.exe'
+  condition: all of selection_*
+falsepositives:
+  - Office add-ins or VBA automation that legitimately shells out (inventory them and add filters)
+level: high

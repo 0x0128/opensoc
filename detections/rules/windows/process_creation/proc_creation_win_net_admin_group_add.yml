@@ -1,0 +1,41 @@
+title: User Added To Privileged Group With Net.exe
+id: 202012c9-768f-4c04-8e69-6b85dce54b3e
+status: test
+description: Detects net.exe adding an account to the local Administrators / Remote Desktop Users groups or to Domain/Enterprise Admins.
+references:
+  - https://attack.mitre.org/techniques/T1098/
+author: OpenSOC Detection Engineering
+date: 2026-11-04
+tags:
+  - attack.persistence
+  - attack.privilege-escalation
+  - attack.t1098
+logsource:
+  category: process_creation
+  product: windows
+detection:
+  selection_img:
+    - Image|endswith:
+        - '\net.exe'
+        - '\net1.exe'
+    - OriginalFileName:
+        - 'net.exe'
+        - 'net1.exe'
+  selection_group:
+    CommandLine|contains:
+      - ' localgroup '
+      - ' group '
+  selection_privileged:
+    CommandLine|contains:
+      - 'administrators'
+      - 'administradores'
+      - 'administrateurs'
+      - 'Remote Desktop Users'
+      - 'Domain Admins'
+      - 'Enterprise Admins'
+  selection_add:
+    CommandLine|contains|windash: ' -add'
+  condition: all of selection_*
+falsepositives:
+  - Endpoint provisioning scripts during workstation build
+level: high

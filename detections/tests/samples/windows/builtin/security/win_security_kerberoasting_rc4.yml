@@ -1,0 +1,35 @@
+rule_id: 7bffd4f9-8be4-42ab-af95-c101897298ab
+cases:
+  - name: RC4 ticket for a SQL service account
+    expect: match
+    event:
+      EventID: 4769
+      TargetUserName: 'jdoe@OPENSOC.LOCAL'
+      ServiceName: 'svc_sql'
+      ServiceSid: 'S-1-5-21-1111111111-2222222222-3333333333-1607'
+      TicketOptions: '0x40810000'
+      TicketEncryptionType: '0x17'
+      IpAddress: '::ffff:10.20.30.40'
+      Status: '0x0'
+  - name: AES ticket for a computer account
+    expect: no_match
+    event:
+      EventID: 4769
+      TargetUserName: 'jdoe@OPENSOC.LOCAL'
+      ServiceName: 'FS01$'
+      ServiceSid: 'S-1-5-21-1111111111-2222222222-3333333333-1105'
+      TicketOptions: '0x40810000'
+      TicketEncryptionType: '0x12'
+      IpAddress: '::ffff:10.20.30.40'
+      Status: '0x0'
+  - name: RC4 ticket for a computer account
+    expect: no_match
+    event:
+      EventID: 4769
+      TargetUserName: 'jdoe@OPENSOC.LOCAL'
+      ServiceName: 'NAS01$'
+      ServiceSid: 'S-1-5-21-1111111111-2222222222-3333333333-1120'
+      TicketOptions: '0x40810000'
+      TicketEncryptionType: '0x17'
+      IpAddress: '::ffff:10.20.30.40'
+      Status: '0x0'

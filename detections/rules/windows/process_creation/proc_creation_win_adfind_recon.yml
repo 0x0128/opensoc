@@ -1,0 +1,34 @@
+title: Active Directory Enumeration With AdFind
+id: b4b3276a-d3e0-46ae-b059-5758e3216370
+status: test
+description: Detects AdFind (or a renamed copy) dumping users, computers, groups, trusts or subnets from Active Directory, a tool heavily used by ransomware affiliates during discovery.
+references:
+  - https://www.joeware.net/freetools/tools/adfind/
+  - https://attack.mitre.org/software/S0552/
+author: OpenSOC Detection Engineering
+date: 2026-11-04
+tags:
+  - attack.discovery
+  - attack.t1087.002
+  - attack.t1069.002
+  - attack.t1482
+  - attack.s0552
+logsource:
+  category: process_creation
+  product: windows
+detection:
+  selection_cli:
+    CommandLine|contains:
+      - 'objectcategory=computer'
+      - 'objectcategory=person'
+      - 'objectcategory=group'
+      - 'objectcategory=subnet'
+      - 'objectcategory=organizationalUnit'
+      - 'trustdmp'
+      - 'dcmodes'
+      - 'domainlist'
+      - '-gcb -sc'
+  condition: selection_cli
+falsepositives:
+  - Directory administrators using AdFind or LDAP query scripts for reporting
+level: high

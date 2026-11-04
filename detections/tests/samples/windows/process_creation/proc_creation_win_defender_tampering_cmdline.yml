@@ -1,0 +1,23 @@
+rule_id: 8fff71b5-f537-4baa-b6d1-88c951eb5737
+cases:
+  - name: Realtime monitoring disabled
+    expect: match
+    event:
+      Image: 'C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe'
+      CommandLine: 'powershell.exe -c Set-MpPreference -DisableRealtimeMonitoring $true'
+      ParentImage: 'C:\Windows\System32\cmd.exe'
+      User: 'NT AUTHORITY\SYSTEM'
+  - name: Whole user profile excluded from scanning
+    expect: match
+    event:
+      Image: 'C:\Program Files\PowerShell\7\pwsh.exe'
+      CommandLine: 'pwsh -c "Add-MpPreference -ExclusionPath C:\Users"'
+      ParentImage: 'C:\Windows\System32\cmd.exe'
+      User: 'OPENSOC\admin'
+  - name: Reading the current Defender preferences
+    expect: no_match
+    event:
+      Image: 'C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe'
+      CommandLine: 'powershell.exe -c Get-MpPreference | Select-Object ExclusionPath'
+      ParentImage: 'C:\Windows\System32\cmd.exe'
+      User: 'OPENSOC\admin'

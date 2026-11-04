@@ -1,0 +1,35 @@
+rule_id: 91797930-3a35-4b69-a6c5-d0f1aa89946c
+cases:
+  - name: SUID bit set on a copied shell
+    expect: match
+    event:
+      type: EXECVE
+      a0: chmod
+      a1: u+s
+      a2: /var/tmp/.bash
+      comm: chmod
+      exe: /usr/bin/chmod
+      uid: 0
+      key: exec
+  - name: Numeric mode 4755
+    expect: match
+    event:
+      type: EXECVE
+      a0: /bin/chmod
+      a1: '4755'
+      a2: /usr/local/bin/helper
+      comm: chmod
+      exe: /usr/bin/chmod
+      uid: 0
+      key: exec
+  - name: Making a script executable
+    expect: no_match
+    event:
+      type: EXECVE
+      a0: chmod
+      a1: '755'
+      a2: /home/ops/deploy.sh
+      comm: chmod
+      exe: /usr/bin/chmod
+      uid: 1001
+      key: exec

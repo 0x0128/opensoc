@@ -1,0 +1,41 @@
+title: LOLBin Initiating Connection To Public IP Address
+id: a94906d6-b08f-4e36-86c0-64f4a522aceb
+status: test
+description: Detects system binaries commonly abused as proxies for code execution (rundll32, regsvr32, mshta, msiexec, script hosts...) initiating network connections to non-private IP addresses.
+references:
+  - https://attack.mitre.org/techniques/T1218/
+  - https://lolbas-project.github.io/
+author: OpenSOC Detection Engineering
+date: 2026-11-04
+tags:
+  - attack.stealth
+  - attack.t1218
+  - attack.command-and-control
+  - attack.t1105
+logsource:
+  category: network_connection
+  product: windows
+detection:
+  selection:
+    Initiated: 'true'
+    Image|endswith:
+      - '\rundll32.exe'
+      - '\regsvr32.exe'
+      - '\mshta.exe'
+      - '\msiexec.exe'
+      - '\wscript.exe'
+      - '\cscript.exe'
+      - '\certutil.exe'
+  filter_main_private:
+    DestinationIp|cidr:
+      - '10.0.0.0/8'
+      - '172.16.0.0/12'
+      - '192.168.0.0/16'
+      - '127.0.0.0/8'
+      - '169.254.0.0/16'
+      - '100.64.0.0/10'
+  condition: selection and not filter_main_private
+falsepositives:
+  - msiexec downloading packages from vendor CDNs during software installation
+  - Certificate revocation checks made by certutil
+level: medium

@@ -1,0 +1,22 @@
+rule_id: 8666117b-7651-44d5-9050-e3517a83defe
+cases:
+  - name: Reverse shell appended to /etc/crontab with echo redirection
+    expect: match
+    event:
+      type: PATH
+      name: /etc/crontab
+      comm: bash
+      exe: /usr/bin/bash
+      syscall: 257
+      uid: 0
+      key: cron
+  - name: Package upgrade replacing a cron.d file
+    expect: no_match
+    event:
+      type: PATH
+      name: /etc/cron.d/sysstat
+      comm: dpkg
+      exe: /usr/bin/dpkg
+      syscall: 82
+      uid: 0
+      key: cron

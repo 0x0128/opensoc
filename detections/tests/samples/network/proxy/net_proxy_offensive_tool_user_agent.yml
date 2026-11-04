@@ -1,0 +1,24 @@
+rule_id: e25c82ab-48a3-48ce-8bb6-313a62a3b7b4
+cases:
+  - name: sqlmap probing a login form
+    expect: match
+    event:
+      src_ip: 198.51.100.77
+      dst_ip: 10.10.0.20
+      dst_port: 443
+      cs-host: portal.opensoc.example
+      cs-method: POST
+      c-uri: '/login.php?id=1%27%20AND%201=1--'
+      c-useragent: 'sqlmap/1.8.2#stable (https://sqlmap.org)'
+      sc-status: 200
+  - name: Regular browser request
+    expect: no_match
+    event:
+      src_ip: 198.51.100.78
+      dst_ip: 10.10.0.20
+      dst_port: 443
+      cs-host: portal.opensoc.example
+      cs-method: GET
+      c-uri: /index.html
+      c-useragent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36'
+      sc-status: 200

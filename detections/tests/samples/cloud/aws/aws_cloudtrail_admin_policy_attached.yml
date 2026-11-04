@@ -1,0 +1,30 @@
+rule_id: ae34cce8-d994-459c-9118-d025a3e3807e
+cases:
+  - name: AdministratorAccess attached to a freshly created user
+    expect: match
+    event:
+      eventSource: iam.amazonaws.com
+      eventName: AttachUserPolicy
+      eventTime: '2026-11-04T12:30:00Z'
+      sourceIPAddress: 203.0.113.140
+      userAgent: aws-cli/2.17.0
+      userIdentity:
+        type: IAMUser
+        arn: 'arn:aws:iam::111122223333:user/ana'
+      requestParameters:
+        userName: backup-svc
+        policyArn: 'arn:aws:iam::aws:policy/AdministratorAccess'
+  - name: Read-only policy attached
+    expect: no_match
+    event:
+      eventSource: iam.amazonaws.com
+      eventName: AttachRolePolicy
+      eventTime: '2026-11-04T12:31:00Z'
+      sourceIPAddress: 198.51.100.10
+      userAgent: terraform/1.9.5
+      userIdentity:
+        type: AssumedRole
+        arn: 'arn:aws:sts::111122223333:assumed-role/terraform/ci'
+      requestParameters:
+        roleName: audit-reader
+        policyArn: 'arn:aws:iam::aws:policy/ReadOnlyAccess'

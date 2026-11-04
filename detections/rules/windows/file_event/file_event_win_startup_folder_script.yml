@@ -1,0 +1,37 @@
+title: Script Or Executable Dropped In Startup Folder
+id: 941c230d-4078-47e9-a1fe-e6d90a360700
+status: test
+description: Detects creation of scripts or executables in a user or the common Startup folder, which Windows executes at every logon.
+references:
+  - https://attack.mitre.org/techniques/T1547/001/
+author: OpenSOC Detection Engineering
+date: 2026-11-04
+tags:
+  - attack.persistence
+  - attack.privilege-escalation
+  - attack.t1547.001
+logsource:
+  category: file_event
+  product: windows
+detection:
+  selection_path:
+    TargetFilename|contains: '\Microsoft\Windows\Start Menu\Programs\Startup\'
+  selection_ext:
+    TargetFilename|endswith:
+      - '.bat'
+      - '.cmd'
+      - '.vbs'
+      - '.vbe'
+      - '.js'
+      - '.jse'
+      - '.wsf'
+      - '.wsh'
+      - '.ps1'
+      - '.hta'
+      - '.exe'
+      - '.dll'
+      - '.scr'
+  condition: all of selection_*
+falsepositives:
+  - Legacy logon scripts deployed by administrators into the common Startup folder
+level: medium

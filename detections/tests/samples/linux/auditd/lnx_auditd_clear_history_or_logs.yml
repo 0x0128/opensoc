@@ -1,0 +1,36 @@
+rule_id: a44a76ab-5c96-49d8-b9ec-a4b5477e50e8
+cases:
+  - name: shred wiping bash history
+    expect: match
+    event:
+      type: EXECVE
+      a0: shred
+      a1: '-u'
+      a2: '-z'
+      a3: /root/.bash_history
+      comm: shred
+      exe: /usr/bin/shred
+      uid: 0
+      key: exec
+  - name: rm deleting the audit log
+    expect: match
+    event:
+      type: EXECVE
+      a0: /bin/rm
+      a1: '-f'
+      a2: /var/log/audit/audit.log
+      comm: rm
+      exe: /usr/bin/rm
+      uid: 0
+      key: exec
+  - name: rm cleaning a build directory
+    expect: no_match
+    event:
+      type: EXECVE
+      a0: rm
+      a1: '-rf'
+      a2: /home/ops/build/output
+      comm: rm
+      exe: /usr/bin/rm
+      uid: 1001
+      key: exec

@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "opensoc-detections"
+version = "0.1.0"
+description = "OpenSOC detection-as-code: Sigma rules, pySigma -> Wazuh conversion, tests and ATT&CK coverage"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+dependencies = [
+  "pySigma==2.0.2",
+  "sigma-cli==4.0.0",
+  "PyYAML>=6.0",
+]
+
+[project.optional-dependencies]
+test = ["pytest>=8"]
+
+[project.scripts]
+opensoc-detections = "opensoc_detections.cli:main"
+
+[tool.setuptools]
+packages = ["opensoc_detections", "opensoc_detections.wazuh", "sigma.backends.opensoc_wazuh"]
+
+[tool.setuptools.package-dir]
+"sigma.backends.opensoc_wazuh" = "sigma_plugins/sigma/backends/opensoc_wazuh"
+
+[tool.setuptools.package-data]
+opensoc_detections = ["data/*.json"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+  "wazuh: integration tests that run the converted rules through a real wazuh-logtest (Docker)",
+]

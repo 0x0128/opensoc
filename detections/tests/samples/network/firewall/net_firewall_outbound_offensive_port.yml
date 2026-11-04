@@ -1,0 +1,26 @@
+rule_id: 18a33cac-fa9e-4a1b-b1f5-597bd40d1a94
+cases:
+  - name: Meterpreter reverse TCP to the Internet
+    expect: match
+    event:
+      src_ip: 10.20.30.40
+      src_port: 49822
+      dst_ip: 203.0.113.66
+      dst_port: 4444
+      protocol: TCP
+  - name: Internal service on 4444 between two servers
+    expect: no_match
+    event:
+      src_ip: 10.20.30.40
+      src_port: 49823
+      dst_ip: 10.30.0.5
+      dst_port: 4444
+      protocol: TCP
+  - name: HTTPS to the Internet
+    expect: no_match
+    event:
+      src_ip: 10.20.30.40
+      src_port: 49824
+      dst_ip: 203.0.113.66
+      dst_port: 443
+      protocol: TCP

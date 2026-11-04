@@ -1,0 +1,22 @@
+rule_id: 73f771ad-d660-46d2-a469-c743e8430c62
+cases:
+  - name: NOPASSWD entry written to sudoers.d
+    expect: match
+    event:
+      type: PATH
+      name: /etc/sudoers.d/99-www-data
+      comm: tee
+      exe: /usr/bin/tee
+      syscall: 257
+      uid: 0
+      key: sudoers
+  - name: sudo package upgrade
+    expect: no_match
+    event:
+      type: PATH
+      name: /etc/sudoers
+      comm: dpkg
+      exe: /usr/bin/dpkg
+      syscall: 82
+      uid: 0
+      key: sudoers

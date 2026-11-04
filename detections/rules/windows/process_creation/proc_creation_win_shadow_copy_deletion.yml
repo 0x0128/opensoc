@@ -1,0 +1,41 @@
+title: Shadow Copies Or Backup Catalog Deletion
+id: 0350899d-4993-4459-918b-b89e5e8c69c0
+status: test
+description: Detects deletion of Volume Shadow Copies, the Windows backup catalog or disabling of boot recovery, typical ransomware preparation to inhibit system recovery.
+references:
+  - https://attack.mitre.org/techniques/T1490/
+  - https://www.cisa.gov/stopransomware
+author: OpenSOC Detection Engineering
+date: 2026-11-04
+tags:
+  - attack.impact
+  - attack.t1490
+logsource:
+  category: process_creation
+  product: windows
+detection:
+  selection_vssadmin:
+    Image|endswith: '\vssadmin.exe'
+    CommandLine|contains|all:
+      - 'delete'
+      - 'shadows'
+  selection_wmic:
+    Image|endswith: '\wmic.exe'
+    CommandLine|contains|all:
+      - 'shadowcopy'
+      - 'delete'
+  selection_wbadmin:
+    Image|endswith: '\wbadmin.exe'
+    CommandLine|contains|all:
+      - 'delete'
+      - 'catalog'
+  selection_bcdedit:
+    Image|endswith: '\bcdedit.exe'
+    CommandLine|contains|all:
+      - 'recoveryenabled'
+      - 'no'
+  condition: 1 of selection_*
+falsepositives:
+  - Backup software rotating shadow copies (should run from a known service account and parent)
+  - Administrators freeing disk space
+level: high

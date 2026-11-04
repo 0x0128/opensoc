@@ -1,0 +1,31 @@
+title: DNS Query For Reverse Tunneling Service
+id: 5e673848-fdee-42b6-be4a-3b01bab927f5
+status: test
+description: Detects DNS resolution of reverse tunneling / exposure services (ngrok, Cloudflare quick tunnels, serveo, localtunnel...) that attackers use to expose C2 channels or internal services without inbound firewall rules.
+references:
+  - https://attack.mitre.org/techniques/T1572/
+  - https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/do-more-with-tunnels/trycloudflare/
+author: OpenSOC Detection Engineering
+date: 2026-11-04
+tags:
+  - attack.command-and-control
+  - attack.t1572
+logsource:
+  category: dns
+detection:
+  selection:
+    query|endswith:
+      - '.ngrok.io'
+      - '.ngrok-free.app'
+      - '.ngrok.app'
+      - '.trycloudflare.com'
+      - '.serveo.net'
+      - '.loca.lt'
+      - '.localhost.run'
+      - '.pinggy.link'
+      - '.portmap.io'
+      - '.playit.gg'
+  condition: selection
+falsepositives:
+  - Developers sharing local web applications for demos or webhook testing
+level: medium

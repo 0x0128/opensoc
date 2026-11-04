@@ -1,0 +1,33 @@
+rule_id: 34158a37-a9eb-4194-9360-322d0cd7c6b9
+cases:
+  - name: IAM user logs in with password only
+    expect: match
+    event:
+      eventSource: signin.amazonaws.com
+      eventName: ConsoleLogin
+      eventTime: '2026-11-04T09:15:00Z'
+      sourceIPAddress: 203.0.113.140
+      userAgent: 'Mozilla/5.0 (X11; Linux x86_64)'
+      userIdentity:
+        type: IAMUser
+        arn: 'arn:aws:iam::111122223333:user/ana'
+        userName: ana
+      responseElements:
+        ConsoleLogin: Success
+      additionalEventData:
+        MFAUsed: 'No'
+  - name: SSO federated login (MFA enforced by the IdP)
+    expect: no_match
+    event:
+      eventSource: signin.amazonaws.com
+      eventName: ConsoleLogin
+      eventTime: '2026-11-04T09:16:00Z'
+      sourceIPAddress: 198.51.100.10
+      userAgent: 'Mozilla/5.0 (X11; Linux x86_64)'
+      userIdentity:
+        type: AssumedRole
+        arn: 'arn:aws:sts::111122223333:assumed-role/AWSReservedSSO_Admin_0123456789abcdef/ana@opensoc.example'
+      responseElements:
+        ConsoleLogin: Success
+      additionalEventData:
+        MFAUsed: 'No'

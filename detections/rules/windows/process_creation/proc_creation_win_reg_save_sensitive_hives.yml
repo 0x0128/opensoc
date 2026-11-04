@@ -1,0 +1,34 @@
+title: Sensitive Registry Hive Saved With Reg.exe
+id: e11d92d7-a4e8-46a4-a674-19981c7dc2cd
+status: test
+description: Detects reg.exe saving or exporting the SAM, SECURITY or SYSTEM hives, which allows offline extraction of local password hashes and LSA secrets.
+references:
+  - https://attack.mitre.org/techniques/T1003/002/
+author: OpenSOC Detection Engineering
+date: 2026-11-04
+tags:
+  - attack.credential-access
+  - attack.t1003.002
+logsource:
+  category: process_creation
+  product: windows
+detection:
+  selection_img:
+    - Image|endswith: '\reg.exe'
+    - OriginalFileName: 'reg.exe'
+  selection_action:
+    CommandLine|contains:
+      - ' save '
+      - ' export '
+  selection_hive:
+    CommandLine|contains:
+      - ' hklm\sam'
+      - ' hklm\security'
+      - ' hklm\system '
+      - ' HKEY_LOCAL_MACHINE\SAM'
+      - ' HKEY_LOCAL_MACHINE\SECURITY'
+      - ' HKEY_LOCAL_MACHINE\SYSTEM '
+  condition: all of selection_*
+falsepositives:
+  - Backup or forensic tooling run by administrators
+level: high

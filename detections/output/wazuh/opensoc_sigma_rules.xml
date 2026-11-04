@@ -1,0 +1,1470 @@
+<!-- OpenSOC Sigma detections for Wazuh - GENERATED FILE, DO NOT EDIT. Built by opensoc-detections 0.1.0 from detections/rules (python -m opensoc_detections convert) -->
+<!-- Install: copy to /var/ossec/etc/rules/ on the Wazuh manager and restart it. -->
+
+<group name="opensoc,sigma,aws_cloudtrail,">
+
+  <!-- AWS Administrator Managed Policy Attached To Principal | sigma ae34cce8-d994-459c-9118-d025a3e3807e | rules/cloud/aws/aws_cloudtrail_admin_policy_attached.yml -->
+  <rule id="110000" level="12">
+    <if_sid>80200, 80300, 80325, 80350, 80360, 80400, 80440, 80441, 80450, 80451, 80452, 80453, 80480, 80490, 80495, 99800, 99801, 99802, 99803, 99804, 99805, 99806, 99807, 99808, 99809, 99810, 99811, 99812, 99813, 99814, 99815, 99816, 99817, 99818, 99819, 99820, 99821, 99822, 99823, 99824, 99825, 99826, 99827, 99828, 99829, 99830, 99831, 99832, 99833, 99834, 99835</if_sid>
+    <field name="aws.source" type="pcre2">^cloudtrail$</field>
+    <field name="aws.eventSource" type="pcre2">(?i)^iam\.amazonaws\.com$</field>
+    <field name="aws.eventName" type="pcre2">(?i)(?:^AttachUserPolicy$|^AttachGroupPolicy$|^AttachRolePolicy$)</field>
+    <field name="aws.requestParameters.policyArn" type="pcre2">(?i)(?::policy/AdministratorAccess$|:policy/IAMFullAccess$|:policy/PowerUserAccess$)</field>
+    <description>AWS Administrator Managed Policy Attached To Principal</description>
+    <mitre>
+      <id>T1098.003</id>
+    </mitre>
+    <info type="text">Sigma rule ae34cce8-d994-459c-9118-d025a3e3807e</info>
+    <info type="link">https://docs.aws.amazon.com/IAM/latest/APIReference/API_AttachUserPolicy.html</info>
+    <options>no_full_log</options>
+    <group>sigma_high,attack_persistence,attack_privilege-escalation,</group>
+  </rule>
+
+  <!-- AWS Console Login Without MFA | sigma 34158a37-a9eb-4194-9360-322d0cd7c6b9 | rules/cloud/aws/aws_cloudtrail_console_login_without_mfa.yml -->
+  <rule id="110010" level="8">
+    <if_sid>80200, 80300, 80325, 80350, 80360, 80400, 80440, 80441, 80450, 80451, 80452, 80453, 80480, 80490, 80495, 99800, 99801, 99802, 99803, 99804, 99805, 99806, 99807, 99808, 99809, 99810, 99811, 99812, 99813, 99814, 99815, 99816, 99817, 99818, 99819, 99820, 99821, 99822, 99823, 99824, 99825, 99826, 99827, 99828, 99829, 99830, 99831, 99832, 99833, 99834, 99835</if_sid>
+    <field name="aws.source" type="pcre2">^cloudtrail$</field>
+    <field name="aws.eventName" type="pcre2">(?i)^ConsoleLogin$</field>
+    <field name="aws.additionalEventData.MFAUsed" type="pcre2">(?i)^No$</field>
+    <field name="aws.responseElements.ConsoleLogin" type="pcre2">(?i)^Success$</field>
+    <field name="aws.userIdentity.type" type="pcre2" negate="yes">(?i)(?:^AssumedRole$|^FederatedUser$)</field>
+    <description>AWS Console Login Without MFA</description>
+    <mitre>
+      <id>T1078.004</id>
+    </mitre>
+    <info type="text">Sigma rule 34158a37-a9eb-4194-9360-322d0cd7c6b9</info>
+    <info type="link">https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-event-reference-aws-console-sign-in-events.html</info>
+    <options>no_full_log</options>
+    <group>sigma_medium,attack_initial-access,attack_persistence,attack_privilege-escalation,</group>
+  </rule>
+
+  <!-- AWS CloudTrail Logging Stopped Or Trail Modified | sigma 3e8d3750-a795-42ca-aa25-9d573e529065 | rules/cloud/aws/aws_cloudtrail_logging_disabled.yml -->
+  <rule id="110020" level="12">
+    <if_sid>80200, 80300, 80325, 80350, 80360, 80400, 80440, 80441, 80450, 80451, 80452, 80453, 80480, 80490, 80495, 99800, 99801, 99802, 99803, 99804, 99805, 99806, 99807, 99808, 99809, 99810, 99811, 99812, 99813, 99814, 99815, 99816, 99817, 99818, 99819, 99820, 99821, 99822, 99823, 99824, 99825, 99826, 99827, 99828, 99829, 99830, 99831, 99832, 99833, 99834, 99835</if_sid>
+    <field name="aws.source" type="pcre2">^cloudtrail$</field>
+    <field name="aws.eventSource" type="pcre2">(?i)^cloudtrail\.amazonaws\.com$</field>
+    <field name="aws.eventName" type="pcre2">(?i)(?:^StopLogging$|^DeleteTrail$|^UpdateTrail$|^PutEventSelectors$|^DeleteEventDataStore$|^StopEventDataStoreIngestion$)</field>
+    <description>AWS CloudTrail Logging Stopped Or Trail Modified</description>
+    <mitre>
+      <id>T1562.008</id>
+    </mitre>
+    <info type="text">Sigma rule 3e8d3750-a795-42ca-aa25-9d573e529065</info>
+    <info type="link">https://docs.aws.amazon.com/awscloudtrail/latest/APIReference/API_StopLogging.html</info>
+    <options>no_full_log</options>
+    <group>sigma_high,attack_defense-impairment,</group>
+  </rule>
+
+  <!-- AWS Root Account Console Login | sigma 7faa524a-f64a-4c05-9328-626f148198e6 | rules/cloud/aws/aws_cloudtrail_root_console_login.yml -->
+  <rule id="110030" level="12">
+    <if_sid>80200, 80300, 80325, 80350, 80360, 80400, 80440, 80441, 80450, 80451, 80452, 80453, 80480, 80490, 80495, 99800, 99801, 99802, 99803, 99804, 99805, 99806, 99807, 99808, 99809, 99810, 99811, 99812, 99813, 99814, 99815, 99816, 99817, 99818, 99819, 99820, 99821, 99822, 99823, 99824, 99825, 99826, 99827, 99828, 99829, 99830, 99831, 99832, 99833, 99834, 99835</if_sid>
+    <field name="aws.source" type="pcre2">^cloudtrail$</field>
+    <field name="aws.eventSource" type="pcre2">(?i)^signin\.amazonaws\.com$</field>
+    <field name="aws.eventName" type="pcre2">(?i)^ConsoleLogin$</field>
+    <field name="aws.userIdentity.type" type="pcre2">(?i)^Root$</field>
+    <field name="aws.responseElements.ConsoleLogin" type="pcre2">(?i)^Success$</field>
+    <description>AWS Root Account Console Login</description>
+    <mitre>
+      <id>T1078.004</id>
+    </mitre>
+    <info type="text">Sigma rule 7faa524a-f64a-4c05-9328-626f148198e6</info>
+    <info type="link">https://docs.aws.amazon.com/IAM/latest/UserGuide/root-user-tasks.html</info>
+    <options>no_full_log</options>
+    <group>sigma_high,attack_initial-access,attack_persistence,attack_privilege-escalation,</group>
+  </rule>
+
+  <!-- AWS Security Group Ingress Opened To The Internet | sigma 1c8fa090-2509-4d02-b265-8ebbc400987c | rules/cloud/aws/aws_cloudtrail_security_group_open_to_world.yml -->
+  <rule id="110040" level="8">
+    <if_sid>80200, 80300, 80325, 80350, 80360, 80400, 80440, 80441, 80450, 80451, 80452, 80453, 80480, 80490, 80495, 99800, 99801, 99802, 99803, 99804, 99805, 99806, 99807, 99808, 99809, 99810, 99811, 99812, 99813, 99814, 99815, 99816, 99817, 99818, 99819, 99820, 99821, 99822, 99823, 99824, 99825, 99826, 99827, 99828, 99829, 99830, 99831, 99832, 99833, 99834, 99835</if_sid>
+    <field name="aws.source" type="pcre2">^cloudtrail$</field>
+    <field name="aws.eventSource" type="pcre2">(?i)^ec2\.amazonaws\.com$</field>
+    <field name="aws.eventName" type="pcre2">(?i)^AuthorizeSecurityGroupIngress$</field>
+    <field name="aws.requestParameters.ipPermissions.items" type="pcre2">(?i)(?:0\.0\.0\.0/0|::/0)</field>
+    <description>AWS Security Group Ingress Opened To The Internet</description>
+    <mitre>
+      <id>T1562.007</id>
+    </mitre>
+    <info type="text">Sigma rule 1c8fa090-2509-4d02-b265-8ebbc400987c</info>
+    <info type="link">https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_AuthorizeSecurityGroupIngress.html</info>
+    <options>no_full_log</options>
+    <group>sigma_medium,attack_defense-impairment,</group>
+  </rule>
+
+  <!-- AWS Security Monitoring Service Disabled | sigma 7b24c6b2-75cc-42c7-a973-ef3eb77c5b69 | rules/cloud/aws/aws_cloudtrail_security_service_disabled.yml -->
+  <rule id="110050" level="12">
+    <if_sid>80200, 80300, 80325, 80350, 80360, 80400, 80440, 80441, 80450, 80451, 80452, 80453, 80480, 80490, 80495, 99800, 99801, 99802, 99803, 99804, 99805, 99806, 99807, 99808, 99809, 99810, 99811, 99812, 99813, 99814, 99815, 99816, 99817, 99818, 99819, 99820, 99821, 99822, 99823, 99824, 99825, 99826, 99827, 99828, 99829, 99830, 99831, 99832, 99833, 99834, 99835</if_sid>
+    <field name="aws.source" type="pcre2">^cloudtrail$</field>
+    <field name="aws.eventSource" type="pcre2">(?i)(?:^guardduty\.amazonaws\.com$|^securityhub\.amazonaws\.com$|^config\.amazonaws\.com$|^macie2\.amazonaws\.com$)</field>
+    <field name="aws.eventName" type="pcre2">(?i)(?:^DeleteDetector$|^DisassociateFromMasterAccount$|^DisassociateFromAdministratorAccount$|^StopMonitoringMembers$|^DisableSecurityHub$|^StopConfigurationRecorder$|^DeleteConfigurationRecorder$|^DeleteDeliveryChannel$|^DisableMacie$|^DisableOrganizationAdminAccount$)</field>
+    <description>AWS Security Monitoring Service Disabled</description>
+    <mitre>
+      <id>T1562.001</id>
+    </mitre>
+    <info type="text">Sigma rule 7b24c6b2-75cc-42c7-a973-ef3eb77c5b69</info>
+    <info type="link">https://docs.aws.amazon.com/guardduty/latest/APIReference/API_DeleteDetector.html</info>
+    <options>no_full_log</options>
+    <group>sigma_high,attack_defense-impairment,</group>
+  </rule>
+
+</group>
+
+<group name="opensoc,sigma,azure_activitylogs,">
+
+  <!-- Azure Network Security Group Or Rule Modified | sigma 665f480d-c67e-45c8-8874-c3b19826ca37 | rules/cloud/azure/azure_activitylogs_nsg_rule_modified.yml -->
+  <rule id="110060" level="8">
+    <if_sid>87810</if_sid>
+    <field name="OperationNameValue" type="pcre2">(?i)(?:^MICROSOFT\.NETWORK/NETWORKSECURITYGROUPS/WRITE$|^MICROSOFT\.NETWORK/NETWORKSECURITYGROUPS/DELETE$|^MICROSOFT\.NETWORK/NETWORKSECURITYGROUPS/SECURITYRULES/WRITE$|^MICROSOFT\.NETWORK/NETWORKSECURITYGROUPS/SECURITYRULES/DELETE$)</field>
+    <field name="ActivityStatusValue" type="pcre2">(?i)(?:^Success$|^Succeeded$)</field>
+    <description>Azure Network Security Group Or Rule Modified</description>
+    <mitre>
+      <id>T1562.007</id>
+    </mitre>
+    <info type="text">Sigma rule 665f480d-c67e-45c8-8874-c3b19826ca37</info>
+    <info type="link">https://learn.microsoft.com/en-us/azure/role-based-access-control/permissions/networking</info>
+    <options>no_full_log</options>
+    <group>sigma_medium,attack_defense-impairment,</group>
+  </rule>
+
+  <!-- Azure Virtual Machine Run Command Executed | sigma 4df36710-397d-4f45-a7e7-b76550d651da | rules/cloud/azure/azure_activitylogs_vm_run_command.yml -->
+  <rule id="110070" level="8">
+    <if_sid>87810</if_sid>
+    <field name="OperationNameValue" type="pcre2">(?i)(?:^MICROSOFT\.COMPUTE/VIRTUALMACHINES/RUNCOMMAND/ACTION$|^MICROSOFT\.COMPUTE/VIRTUALMACHINES/RUNCOMMANDS/WRITE$|^MICROSOFT\.COMPUTE/VIRTUALMACHINESCALESETS/VIRTUALMACHINES/RUNCOMMAND/ACTION$)</field>
+    <description>Azure Virtual Machine Run Command Executed</description>
+    <mitre>
+      <id>T1651</id>
+    </mitre>
+    <info type="text">Sigma rule 4df36710-397d-4f45-a7e7-b76550d651da</info>
+    <info type="link">https://learn.microsoft.com/en-us/azure/virtual-machines/run-command-overview</info>
+    <options>no_full_log</options>
+    <group>sigma_medium,attack_execution,</group>
+  </rule>
+
+</group>
+
+<group name="opensoc,sigma,azure_auditlogs,">
+
+  <!-- Entra ID User MFA Disabled Or Security Info Deleted | sigma 179ef863-c97f-434e-875b-92027cd4112e | rules/cloud/azure/azure_auditlogs_mfa_disabled.yml -->
+  <rule id="110080" level="12">
+    <if_sid>87801</if_sid>
+    <field name="Type" type="pcre2">^AuditLogs$</field>
+    <field name="OperationName" type="pcre2">(?i)(?:^Disable Strong Authentication$|^User deleted security info$|^Admin deleted security info$)</field>
+    <field name="Result" type="pcre2">(?i)^success$</field>
+    <description>Entra ID User MFA Disabled Or Security Info Deleted</description>
+    <mitre>
+      <id>T1556.006</id>
+    </mitre>
+    <info type="text">Sigma rule 179ef863-c97f-434e-875b-92027cd4112e</info>
+    <info type="link">https://learn.microsoft.com/en-us/entra/identity/monitoring-health/reference-audit-activities</info>
+    <options>no_full_log</options>
+    <group>sigma_high,attack_defense-impairment,attack_persistence,attack_credential-access,</group>
+  </rule>
+
+</group>
+
+<group name="opensoc,sigma,azure_signinlogs,">
+
+  <!-- Successful Entra ID Sign-In Using Legacy Authentication | sigma 57ff30f1-0976-4781-8b75-af1419326b23 | rules/cloud/azure/azure_signinlogs_legacy_auth_success.yml -->
+  <rule id="110090" level="8">
+    <if_sid>87801</if_sid>
+    <field name="Type" type="pcre2">^SigninLogs$</field>
+    <field name="ResultType" type="pcre2">^0$</field>
+    <field name="ClientAppUsed" type="pcre2">(?i)(?:^Exchange ActiveSync$|^IMAP4$|^POP3$|^Authenticated SMTP$|^Exchange Web Services$|^MAPI Over HTTP$|^Offline Address Book$|^Outlook Anywhere \(RPC over HTTP\)$|^Exchange Online PowerShell$|^AutoDiscover$|^Other clients$)</field>
+    <description>Successful Entra ID Sign-In Using Legacy Authentication</description>
+    <mitre>
+      <id>T1078.004</id>
+      <id>T1110.003</id>
+    </mitre>
+    <info type="text">Sigma rule 57ff30f1-0976-4781-8b75-af1419326b23</info>
+    <info type="link">https://learn.microsoft.com/en-us/entra/identity/conditional-access/block-legacy-authentication</info>
+    <options>no_full_log</options>
+    <group>sigma_medium,attack_initial-access,attack_persistence,attack_credential-access,</group>
+  </rule>
+
+</group>
+
+<group name="opensoc,sigma,gcp_audit,">
+
+  <!-- GCP Logging Sink Or Exclusion Tampering | sigma 84196449-080a-4112-9449-8a1114330f92 | rules/cloud/gcp/gcp_audit_logging_sink_tampering.yml -->
+  <rule id="110100" level="12">
+    <if_sid>65000, 65001, 65002, 65003, 65039</if_sid>
+    <field name="gcp.protoPayload.methodName" type="pcre2">(?i)(?:^google\.logging\.v2\.ConfigServiceV2\.DeleteSink$|^google\.logging\.v2\.ConfigServiceV2\.UpdateSink$|^google\.logging\.v2\.ConfigServiceV2\.DeleteBucket$|^google\.logging\.v2\.ConfigServiceV2\.CreateExclusion$|^google\.logging\.v2\.ConfigServiceV2\.UpdateExclusion$)</field>
+    <description>GCP Logging Sink Or Exclusion Tampering</description>
+    <mitre>
+      <id>T1562.008</id>
+    </mitre>
+    <info type="text">Sigma rule 84196449-080a-4112-9449-8a1114330f92</info>
+    <info type="link">https://cloud.google.com/logging/docs/reference/v2/rpc/google.logging.v2</info>
+    <options>no_full_log</options>
+    <group>sigma_high,attack_defense-impairment,</group>
+  </rule>
+
+  <!-- GCP Service Account Key Created | sigma 6b9f652f-fe6a-44e7-902f-86ae15c0fab3 | rules/cloud/gcp/gcp_audit_service_account_key_created.yml -->
+  <rule id="110110" level="8">
+    <if_sid>65000, 65001, 65002, 65003, 65039</if_sid>
+    <field name="gcp.protoPayload.methodName" type="pcre2">(?i)^google\.iam\.admin\.v1\.CreateServiceAccountKey$</field>
+    <description>GCP Service Account Key Created</description>
+    <mitre>
+      <id>T1098.001</id>
+    </mitre>
+    <info type="text">Sigma rule 6b9f652f-fe6a-44e7-902f-86ae15c0fab3</info>
+    <info type="link">https://cloud.google.com/iam/docs/keys-create-delete</info>
+    <options>no_full_log</options>
+    <group>sigma_medium,attack_persistence,attack_privilege-escalation,</group>
+  </rule>
+
+</group>
+
+<group name="opensoc,sigma,m365_audit,">
+
+  <!-- Exchange Online Mailbox Forwarding Or Redirect Rule Created | sigma 07663449-6210-47ff-91bd-3bc731852307 | rules/cloud/m365/m365_audit_mail_forwarding_rule.yml -->
+  <rule id="110120" level="12">
+    <if_sid>91531</if_sid>
+    <field name="office365.Operation" type="pcre2">(?i)(?:^New-InboxRule$|^Set-InboxRule$)</field>
+    <field name="office365.Parameters" type="pcre2">(?i)(?:ForwardTo|ForwardAsAttachmentTo|RedirectTo)</field>
+    <description>Exchange Online Mailbox Forwarding Or Redirect Rule Created (variant 1/2)</description>
+    <mitre>
+      <id>T1114.003</id>
+    </mitre>
+    <info type="text">Sigma rule 07663449-6210-47ff-91bd-3bc731852307</info>
+    <info type="link">https://learn.microsoft.com/en-us/defender-office-365/outbound-spam-policies-external-email-forwarding</info>
+    <options>no_full_log</options>
+    <group>sigma_high,attack_collection,</group>
+  </rule>
+  <rule id="110121" level="12">
+    <if_sid>91531</if_sid>
+    <field name="office365.Operation" type="pcre2">(?i)^Set-Mailbox$</field>
+    <field name="office365.Parameters" type="pcre2">(?i)(?:ForwardingSmtpAddress|ForwardingAddress)</field>
+    <description>Exchange Online Mailbox Forwarding Or Redirect Rule Created (variant 2/2)</description>
+    <mitre>
+      <id>T1114.003</id>
+    </mitre>
+    <info type="text">Sigma rule 07663449-6210-47ff-91bd-3bc731852307</info>
+    <info type="link">https://learn.microsoft.com/en-us/defender-office-365/outbound-spam-policies-external-email-forwarding</info>
+    <options>no_full_log</options>
+    <group>sigma_high,attack_collection,</group>
+  </rule>
+
+</group>
+
+<group name="opensoc,sigma,linux_auditd,">
+
+  <!-- Linux Audit Subsystem Disabled Or Rules Deleted | sigma 7a5e1b8d-e331-4782-a063-bc3eb578c1cb | rules/linux/auditd/lnx_auditd_auditd_disabled.yml -->
+  <rule id="110130" level="12">
+    <if_sid>80700, 92600</if_sid>
+    <field name="audit.execve.a0" type="pcre2">(^|/)auditctl$</field>
+    <field name="audit.execve.a1" type="pcre2">(?i)^-e$</field>
+    <field name="audit.execve.a2" type="pcre2">^0$</field>
+    <description>Linux Audit Subsystem Disabled Or Rules Deleted (variant 1/4)</description>
+    <mitre>
+      <id>T1685.004</id>
+    </mitre>
+    <info type="text">Sigma rule 7a5e1b8d-e331-4782-a063-bc3eb578c1cb</info>
+    <info type="link">https://attack.mitre.org/techniques/T1685/004/</info>
+    <group>sigma_high,attack_defense-impairment,</group>
+  </rule>
+  <rule id="110131" level="12">
+    <if_sid>80700, 92600</if_sid>
+    <field name="audit.execve.a0" type="pcre2">(^|/)auditctl$</field>
+    <field name="audit.execve.a1" type="pcre2">(?i)^-D$</field>
+    <description>Linux Audit Subsystem Disabled Or Rules Deleted (variant 2/4)</description>
+    <mitre>
+      <id>T1685.004</id>
+    </mitre>
+    <info type="text">Sigma rule 7a5e1b8d-e331-4782-a063-bc3eb578c1cb</info>
+    <info type="link">https://attack.mitre.org/techniques/T1685/004/</info>
+    <group>sigma_high,attack_defense-impairment,</group>
+  </rule>
+  <rule id="110132" level="12">
+    <if_sid>80700, 92600</if_sid>
+    <field name="audit.execve.a0" type="pcre2">(^|/)systemctl$</field>
+    <field name="audit.execve.a1" type="pcre2">(?i)(?:^stop$|^disable$|^mask$)</field>
+    <field name="audit.execve.a2" type="pcre2">^auditd(\.service)?$</field>
+    <description>Linux Audit Subsystem Disabled Or Rules Deleted (variant 3/4)</description>
+    <mitre>
+      <id>T1685.004</id>
+    </mitre>
+    <info type="text">Sigma rule 7a5e1b8d-e331-4782-a063-bc3eb578c1cb</info>
+    <info type="link">https://attack.mitre.org/techniques/T1685/004/</info>
+    <group>sigma_high,attack_defense-impairment,</group>
+  </rule>
+  <rule id="110133" level="12">
+    <if_sid>80700, 92600</if_sid>
+    <field name="audit.execve.a0" type="pcre2">(^|/)service$</field>
+    <field name="audit.execve.a1" type="pcre2">(?i)^auditd$</field>
+    <field name="audit.execve.a2" type="pcre2">(?i)^stop$</field>
+    <description>Linux Audit Subsystem Disabled Or Rules Deleted (variant 4/4)</description>
+    <mitre>
+      <id>T1685.004</id>
+    </mitre>
+    <info type="text">Sigma rule 7a5e1b8d-e331-4782-a063-bc3eb578c1cb</info>
+    <info type="link">https://attack.mitre.org/techniques/T1685/004/</info>
+    <group>sigma_high,attack_defense-impairment,</group>
+  </rule>
+
+  <!-- Shell History Or System Logs Deleted | sigma a44a76ab-5c96-49d8-b9ec-a4b5477e50e8 | rules/linux/auditd/lnx_auditd_clear_history_or_logs.yml -->
+  <rule id="110140" level="12">
+    <if_sid>80700, 92600</if_sid>
+    <field name="audit.execve.a0" type="pcre2">(^|/)(rm|shred|truncate|unlink)$</field>
+    <field name="audit.execve.a1" type="pcre2">(?i)(?:\.bash_history|\.zsh_history|/var/log/wtmp|/var/log/btmp|/var/log/lastlog|/var/log/auth\.log|/var/log/secure|/var/log/syslog|/var/log/messages|/var/log/audit/)</field>
+    <description>Shell History Or System Logs Deleted (variant 1/4)</description>
+    <mitre>
+      <id>T1070.003</id>
+      <id>T1070.002</id>
+    </mitre>
+    <info type="text">Sigma rule a44a76ab-5c96-49d8-b9ec-a4b5477e50e8</info>
+    <info type="link">https://attack.mitre.org/techniques/T1070/003/</info>
+    <group>sigma_high,attack_stealth,attack_defense-impairment,</group>
+  </rule>
+  <rule id="110141" level="12">
+    <if_sid>80700, 92600</if_sid>
+    <field name="audit.execve.a0" type="pcre2">(^|/)(rm|shred|truncate|unlink)$</field>
+    <field name="audit.execve.a2" type="pcre2">(?i)(?:\.bash_history|\.zsh_history|/var/log/wtmp|/var/log/btmp|/var/log/lastlog|/var/log/auth\.log|/var/log/secure|/var/log/syslog|/var/log/messages|/var/log/audit/)</field>
+    <description>Shell History Or System Logs Deleted (variant 2/4)</description>
+    <mitre>
+      <id>T1070.003</id>
+      <id>T1070.002</id>
+    </mitre>
+    <info type="text">Sigma rule a44a76ab-5c96-49d8-b9ec-a4b5477e50e8</info>
+    <info type="link">https://attack.mitre.org/techniques/T1070/003/</info>
+    <group>sigma_high,attack_stealth,attack_defense-impairment,</group>
+  </rule>
+  <rule id="110142" level="12">
+    <if_sid>80700, 92600</if_sid>
+    <field name="audit.execve.a0" type="pcre2">(^|/)(rm|shred|truncate|unlink)$</field>
+    <field name="audit.execve.a3" type="pcre2">(?i)(?:\.bash_history|\.zsh_history|/var/log/wtmp|/var/log/btmp|/var/log/lastlog|/var/log/auth\.log|/var/log/secure|/var/log/syslog|/var/log/messages|/var/log/audit/)</field>
+    <description>Shell History Or System Logs Deleted (variant 3/4)</description>
+    <mitre>
+      <id>T1070.003</id>
+      <id>T1070.002</id>
+    </mitre>
+    <info type="text">Sigma rule a44a76ab-5c96-49d8-b9ec-a4b5477e50e8</info>
+    <info type="link">https://attack.mitre.org/techniques/T1070/003/</info>
+    <group>sigma_high,attack_stealth,attack_defense-impairment,</group>
+  </rule>
+  <rule id="110143" level="12">
+    <if_sid>80700, 92600</if_sid>
+    <field name="audit.execve.a0" type="pcre2">(^|/)(rm|shred|truncate|unlink)$</field>
+    <field name="audit.execve.a4" type="pcre2">(?i)(?:\.bash_history|\.zsh_history|/var/log/wtmp|/var/log/btmp|/var/log/lastlog|/var/log/auth\.log|/var/log/secure|/var/log/syslog|/var/log/messages|/var/log/audit/)</field>
+    <description>Shell History Or System Logs Deleted (variant 4/4)</description>
+    <mitre>
+      <id>T1070.003</id>
+      <id>T1070.002</id>
+    </mitre>
+    <info type="text">Sigma rule a44a76ab-5c96-49d8-b9ec-a4b5477e50e8</info>
+    <info type="link">https://attack.mitre.org/techniques/T1070/003/</info>
+    <group>sigma_high,attack_stealth,attack_defense-impairment,</group>
+  </rule>
+
+  <!-- Cron Configuration Modified | sigma 8666117b-7651-44d5-9050-e3517a83defe | rules/linux/auditd/lnx_auditd_cron_modification.yml -->
+  <rule id="110150" level="8">
+    <if_sid>80700, 92600</if_sid>
+    <field name="audit.file.name" type="pcre2">(?i)(?:^/etc/cron|^/var/spool/cron/)</field>
+    <field name="audit.command" type="pcre2" negate="yes">(?i)(?:^dpkg|^rpm|^yum|^dnf|^apt|^unattended)</field>
+    <description>Cron Configuration Modified</description>
+    <mitre>
+      <id>T1053.003</id>
+    </mitre>
+    <info type="text">Sigma rule 8666117b-7651-44d5-9050-e3517a83defe</info>
+    <info type="link">https://attack.mitre.org/techniques/T1053/003/</info>
+    <group>sigma_medium,attack_execution,attack_persistence,attack_privilege-escalation,</group>
+  </rule>
+
+  <!-- Program Executed From Temporary Directory | sigma 56e5de9f-637d-47ba-ba61-1659a5d3123d | rules/linux/auditd/lnx_auditd_execution_from_tmp.yml -->
+  <rule id="110160" level="8">
+    <if_sid>80700, 92600</if_sid>
+    <field name="audit.execve.a0" type="pcre2">(?i)(?:^/tmp/|^/var/tmp/|^/dev/shm/)</field>
+    <description>Program Executed From Temporary Directory (variant 1/2)</description>
+    <mitre>
+      <id>T1036</id>
+      <id>T1059.004</id>
+    </mitre>
+    <info type="text">Sigma rule 56e5de9f-637d-47ba-ba61-1659a5d3123d</info>
+    <info type="link">https://attack.mitre.org/techniques/T1036/</info>
+    <group>sigma_medium,attack_stealth,attack_execution,</group>
+  </rule>
+  <rule id="110161" level="8">
+    <if_sid>80700, 92600</if_sid>
+    <field name="audit.execve.a0" type="pcre2">(?i)^\./</field>
+    <field name="audit.cwd" type="pcre2">(?i)(?:^/tmp|^/var/tmp|^/dev/shm)</field>
+    <description>Program Executed From Temporary Directory (variant 2/2)</description>
+    <mitre>
+      <id>T1036</id>
+      <id>T1059.004</id>
+    </mitre>
+    <info type="text">Sigma rule 56e5de9f-637d-47ba-ba61-1659a5d3123d</info>
+    <info type="link">https://attack.mitre.org/techniques/T1036/</info>
+    <group>sigma_medium,attack_stealth,attack_execution,</group>
+  </rule>
+
+  <!-- Host Firewall Disabled Or Flushed | sigma 1ddb699e-098c-4fd2-bb64-5c2e4070cae0 | rules/linux/auditd/lnx_auditd_firewall_disabled.yml -->
+  <rule id="110170" level="12">
+    <if_sid>80700, 92600</if_sid>
+    <field name="audit.execve.a0" type="pcre2">(^|/)ufw$</field>
+    <field name="audit.execve.a1" type="pcre2">(?i)^disable$</field>
+    <description>Host Firewall Disabled Or Flushed (variant 1/4)</description>
+    <mitre>
+      <id>T1562.004</id>
+    </mitre>
+    <info type="text">Sigma rule 1ddb699e-098c-4fd2-bb64-5c2e4070cae0</info>
+    <info type="link">https://attack.mitre.org/techniques/T1686/</info>
+    <group>sigma_high,attack_defense-impairment,</group>
+  </rule>
+  <rule id="110171" level="12">
+    <if_sid>80700, 92600</if_sid>
+    <field name="audit.execve.a0" type="pcre2">(^|/)systemctl$</field>
+    <field name="audit.execve.a1" type="pcre2">(?i)(?:^stop$|^disable$|^mask$)</field>
+    <field name="audit.execve.a2" type="pcre2">^(firewalld|ufw|nftables|iptables)(\.service)?$</field>
+    <description>Host Firewall Disabled Or Flushed (variant 2/4)</description>
+    <mitre>
+      <id>T1562.004</id>
+    </mitre>
+    <info type="text">Sigma rule 1ddb699e-098c-4fd2-bb64-5c2e4070cae0</info>
+    <info type="link">https://attack.mitre.org/techniques/T1686/</info>
+    <group>sigma_high,attack_defense-impairment,</group>
+  </rule>
+  <rule id="110172" level="12">
+    <if_sid>80700, 92600</if_sid>
+    <field name="audit.execve.a0" type="pcre2">(^|/)(iptables|ip6tables)$</field>
+    <field name="audit.execve.a1" type="pcre2">(?i)(?:^-F$|^--flush$)</field>
+    <description>Host Firewall Disabled Or Flushed (variant 3/4)</description>
+    <mitre>
+      <id>T1562.004</id>
+    </mitre>
+    <info type="text">Sigma rule 1ddb699e-098c-4fd2-bb64-5c2e4070cae0</info>
+    <info type="link">https://attack.mitre.org/techniques/T1686/</info>
+    <group>sigma_high,attack_defense-impairment,</group>
+  </rule>
+  <rule id="110173" level="12">
+    <if_sid>80700, 92600</if_sid>
+    <field name="audit.execve.a0" type="pcre2">(^|/)nft$</field>
+    <field name="audit.execve.a1" type="pcre2">(?i)^flush$</field>
+    <field name="audit.execve.a2" type="pcre2">(?i)^ruleset$</field>
+    <description>Host Firewall Disabled Or Flushed (variant 4/4)</description>
+    <mitre>
+      <id>T1562.004</id>
+    </mitre>
+    <info type="text">Sigma rule 1ddb699e-098c-4fd2-bb64-5c2e4070cae0</info>
+    <info type="link">https://attack.mitre.org/techniques/T1686/</info>
+    <group>sigma_high,attack_defense-impairment,</group>
+  </rule>
+
+  <!-- Kernel Module Loaded From File With Insmod Or Modprobe | sigma 77265f15-712d-4270-8b98-8788d3d5e85f | rules/linux/auditd/lnx_auditd_kernel_module_load.yml -->
+  <rule id="110180" level="8">
+    <if_sid>80700, 92600</if_sid>
+    <field name="audit.execve.a0" type="pcre2">(^|/)(insmod|modprobe)$</field>
+    <field name="audit.execve.a1" type="pcre2">(?i)\.ko$</field>
+    <description>Kernel Module Loaded From File With Insmod Or Modprobe (variant 1/2)</description>
+    <mitre>
+      <id>T1547.006</id>
+    </mitre>
+    <info type="text">Sigma rule 77265f15-712d-4270-8b98-8788d3d5e85f</info>
+    <info type="link">https://attack.mitre.org/techniques/T1547/006/</info>
+    <group>sigma_medium,attack_persistence,attack_privilege-escalation,</group>
+  </rule>
+  <rule id="110181" level="8">
+    <if_sid>80700, 92600</if_sid>
+    <field name="audit.execve.a0" type="pcre2">(^|/)(insmod|modprobe)$</field>
+    <field name="audit.execve.a2" type="pcre2">(?i)\.ko$</field>
+    <description>Kernel Module Loaded From File With Insmod Or Modprobe (variant 2/2)</description>
+    <mitre>
+      <id>T1547.006</id>
+    </mitre>
+    <info type="text">Sigma rule 77265f15-712d-4270-8b98-8788d3d5e85f</info>
+    <info type="link">https://attack.mitre.org/techniques/T1547/006/</info>
+    <group>sigma_medium,attack_persistence,attack_privilege-escalation,</group>
+  </rule>
+
+  <!-- Netcat Spawning A Shell (Reverse Or Bind Shell) | sigma dcfa7d5e-4acc-4b0c-8e69-abf528f7a1eb | rules/linux/auditd/lnx_auditd_netcat_reverse_shell.yml -->
+  <rule id="110190" level="12">
+    <if_sid>80700, 92600</if_sid>
+    <field name="audit.execve.a0" type="pcre2">(^|/)(nc|ncat|netcat|nc\.traditional|nc\.openbsd)$</field>
+    <field name="audit.execve.a1" type="pcre2">(?i)(?:^-e$|^-c$|^--exec$|^--sh-exec$|^--lua-exec$)</field>
+    <description>Netcat Spawning A Shell (Reverse Or Bind Shell) (variant 1/3)</description>
+    <mitre>
+      <id>T1059.004</id>
+      <id>T1571</id>
+    </mitre>
+    <info type="text">Sigma rule dcfa7d5e-4acc-4b0c-8e69-abf528f7a1eb</info>
+    <info type="link">https://attack.mitre.org/techniques/T1059/004/</info>
+    <group>sigma_high,attack_execution,attack_command-and-control,</group>
+  </rule>
+  <rule id="110191" level="12">
+    <if_sid>80700, 92600</if_sid>
+    <field name="audit.execve.a0" type="pcre2">(^|/)(nc|ncat|netcat|nc\.traditional|nc\.openbsd)$</field>
+    <field name="audit.execve.a2" type="pcre2">(?i)(?:^-e$|^-c$|^--exec$|^--sh-exec$|^--lua-exec$)</field>
+    <description>Netcat Spawning A Shell (Reverse Or Bind Shell) (variant 2/3)</description>
+    <mitre>
+      <id>T1059.004</id>
+      <id>T1571</id>
+    </mitre>
+    <info type="text">Sigma rule dcfa7d5e-4acc-4b0c-8e69-abf528f7a1eb</info>
+    <info type="link">https://attack.mitre.org/techniques/T1059/004/</info>
+    <group>sigma_high,attack_execution,attack_command-and-control,</group>
+  </rule>
+  <rule id="110192" level="12">
+    <if_sid>80700, 92600</if_sid>
+    <field name="audit.execve.a0" type="pcre2">(^|/)(nc|ncat|netcat|nc\.traditional|nc\.openbsd)$</field>
+    <field name="audit.execve.a3" type="pcre2">(?i)(?:^-e$|^-c$|^--exec$|^--sh-exec$|^--lua-exec$)</field>
+    <description>Netcat Spawning A Shell (Reverse Or Bind Shell) (variant 3/3)</description>
+    <mitre>
+      <id>T1059.004</id>
+      <id>T1571</id>
+    </mitre>
+    <info type="text">Sigma rule dcfa7d5e-4acc-4b0c-8e69-abf528f7a1eb</info>
+    <info type="link">https://attack.mitre.org/techniques/T1059/004/</info>
+    <group>sigma_high,attack_execution,attack_command-and-control,</group>
+  </rule>
+
+  <!-- Setuid Or Setgid Bit Set With Chmod | sigma 91797930-3a35-4b69-a6c5-d0f1aa89946c | rules/linux/auditd/lnx_auditd_setuid_bit_set.yml -->
+  <rule id="110200" level="8">
+    <if_sid>80700, 92600</if_sid>
+    <field name="audit.execve.a0" type="pcre2">(^|/)chmod$</field>
+    <field name="audit.execve.a1" type="pcre2">^([ugoa]*\+[rwxXt]*s[rwxXt]*|[2467][0-7]{3})$</field>
+    <description>Setuid Or Setgid Bit Set With Chmod (variant 1/2)</description>
+    <mitre>
+      <id>T1548.001</id>
+    </mitre>
+    <info type="text">Sigma rule 91797930-3a35-4b69-a6c5-d0f1aa89946c</info>
+    <info type="link">https://attack.mitre.org/techniques/T1548/001/</info>
+    <group>sigma_medium,attack_privilege-escalation,</group>
+  </rule>
+  <rule id="110201" level="8">
+    <if_sid>80700, 92600</if_sid>
+    <field name="audit.execve.a0" type="pcre2">(^|/)chmod$</field>
+    <field name="audit.execve.a2" type="pcre2">^([ugoa]*\+[rwxXt]*s[rwxXt]*|[2467][0-7]{3})$</field>
+    <description>Setuid Or Setgid Bit Set With Chmod (variant 2/2)</description>
+    <mitre>
+      <id>T1548.001</id>
+    </mitre>
+    <info type="text">Sigma rule 91797930-3a35-4b69-a6c5-d0f1aa89946c</info>
+    <info type="link">https://attack.mitre.org/techniques/T1548/001/</info>
+    <group>sigma_medium,attack_privilege-escalation,</group>
+  </rule>
+
+  <!-- SSH Authorized Keys File Modified | sigma 05c40e68-9a51-43a1-9e11-953d91a23c82 | rules/linux/auditd/lnx_auditd_ssh_authorized_keys_modification.yml -->
+  <rule id="110210" level="8">
+    <if_sid>80700, 92600</if_sid>
+    <field name="audit.file.name" type="pcre2">(?i)(?:/\.ssh/authorized_keys$|/\.ssh/authorized_keys2$)</field>
+    <description>SSH Authorized Keys File Modified</description>
+    <mitre>
+      <id>T1098.004</id>
+    </mitre>
+    <info type="text">Sigma rule 05c40e68-9a51-43a1-9e11-953d91a23c82</info>
+    <info type="link">https://attack.mitre.org/techniques/T1098/004/</info>
+    <group>sigma_medium,attack_persistence,attack_privilege-escalation,</group>
+  </rule>
+
+  <!-- Sudoers Configuration Modified | sigma 73f771ad-d660-46d2-a469-c743e8430c62 | rules/linux/auditd/lnx_auditd_sudoers_modification.yml -->
+  <rule id="110220" level="12">
+    <if_sid>80700, 92600</if_sid>
+    <field name="audit.file.name" type="pcre2">(?i)^/etc/sudoers</field>
+    <field name="audit.command" type="pcre2" negate="yes">(?i)(?:^dpkg|^rpm|^yum|^dnf|^apt)</field>
+    <description>Sudoers Configuration Modified</description>
+    <mitre>
+      <id>T1548.003</id>
+    </mitre>
+    <info type="text">Sigma rule 73f771ad-d660-46d2-a469-c743e8430c62</info>
+    <info type="link">https://attack.mitre.org/techniques/T1548/003/</info>
+    <group>sigma_high,attack_privilege-escalation,</group>
+  </rule>
+
+  <!-- Systemd Unit File Created Or Modified | sigma b2267c57-f347-407f-b0cd-3f37f7d7aa56 | rules/linux/auditd/lnx_auditd_systemd_service_creation.yml -->
+  <rule id="110230" level="8">
+    <if_sid>80700, 92600</if_sid>
+    <field name="audit.file.name" type="pcre2">(?i)(?:/etc/systemd/system/|/usr/lib/systemd/system/|/lib/systemd/system/|/run/systemd/system/|/\.config/systemd/user/)</field>
+    <field name="audit.file.name" type="pcre2">(?i)(?:\.service$|\.timer$)</field>
+    <field name="audit.command" type="pcre2" negate="yes">(?i)(?:^dpkg|^rpm|^yum|^dnf|^apt|^unattended)</field>
+    <description>Systemd Unit File Created Or Modified</description>
+    <mitre>
+      <id>T1543.002</id>
+      <id>T1053.006</id>
+    </mitre>
+    <info type="text">Sigma rule b2267c57-f347-407f-b0cd-3f37f7d7aa56</info>
+    <info type="link">https://attack.mitre.org/techniques/T1543/002/</info>
+    <group>sigma_medium,attack_persistence,attack_privilege-escalation,attack_execution,</group>
+  </rule>
+
+</group>
+
+<group name="opensoc,sigma,linux_sshd,">
+
+  <!-- Successful SSH Login As Root | sigma 297ae79b-e7af-423d-ac53-cb2e733153e3 | rules/linux/sshd/lnx_sshd_root_login_accepted.yml -->
+  <rule id="110240" level="8">
+    <if_sid>5700, 5709, 5711, 5721, 5722, 5723, 5724, 5725, 5727, 5729, 5732, 5733, 5734, 5735, 5736, 5750, 5756, 5757, 5761</if_sid>
+    <regex type="pcre2">(?i)(?:Accepted password for root from|Accepted publickey for root from|Accepted keyboard-interactive/pam for root from)</regex>
+    <description>Successful SSH Login As Root</description>
+    <mitre>
+      <id>T1078.003</id>
+      <id>T1021.004</id>
+    </mitre>
+    <info type="text">Sigma rule 297ae79b-e7af-423d-ac53-cb2e733153e3</info>
+    <info type="link">https://attack.mitre.org/techniques/T1078/003/</info>
+    <group>sigma_medium,attack_initial-access,attack_persistence,attack_lateral-movement,</group>
+  </rule>
+
+</group>
+
+<group name="opensoc,sigma,network_dns,">
+
+  <!-- DNS Query For Cryptocurrency Mining Pool | sigma b994ff92-38aa-46f5-afec-b176da258ab7 | rules/network/dns/net_dns_cryptomining_pool.yml -->
+  <rule id="110250" level="12">
+    <if_sid>86603</if_sid>
+    <field name="dns.rrname" type="pcre2">(?i)(?:minexmr\.com|xmrpool\.|nanopool\.org|supportxmr\.com|moneroocean\.stream|hashvault\.pro|f2pool\.com|2miners\.com|herominers\.com|c3pool\.com|unmineable\.com)</field>
+    <description>DNS Query For Cryptocurrency Mining Pool</description>
+    <mitre>
+      <id>T1496</id>
+    </mitre>
+    <info type="text">Sigma rule b994ff92-38aa-46f5-afec-b176da258ab7</info>
+    <info type="link">https://attack.mitre.org/techniques/T1496/</info>
+    <options>no_full_log</options>
+    <group>sigma_high,attack_impact,</group>
+  </rule>
+
+  <!-- DNS Query With Abnormally Long Subdomain Label | sigma 757dd1e5-9429-41ed-9334-4e27d43688d4 | rules/network/dns/net_dns_long_subdomain_label.yml -->
+  <rule id="110260" level="8">
+    <if_sid>86603</if_sid>
+    <field name="dns.rrname" type="pcre2">^[A-Za-z0-9_-]{50,}\.</field>
+    <field name="dns.rrname" type="pcre2" negate="yes">(?i)(?:\.amazonaws\.com$|\.akamaiedge\.net$|\.cloudapp\.azure\.com$|\.in-addr\.arpa$|\.ip6\.arpa$|\.sophosxl\.net$)</field>
+    <description>DNS Query With Abnormally Long Subdomain Label</description>
+    <mitre>
+      <id>T1071.004</id>
+      <id>T1048.003</id>
+    </mitre>
+    <info type="text">Sigma rule 757dd1e5-9429-41ed-9334-4e27d43688d4</info>
+    <info type="link">https://attack.mitre.org/techniques/T1071/004/</info>
+    <options>no_full_log</options>
+    <group>sigma_medium,attack_command-and-control,attack_exfiltration,</group>
+  </rule>
+
+  <!-- DNS Query For Reverse Tunneling Service | sigma 5e673848-fdee-42b6-be4a-3b01bab927f5 | rules/network/dns/net_dns_tunneling_service_domain.yml -->
+  <rule id="110270" level="8">
+    <if_sid>86603</if_sid>
+    <field name="dns.rrname" type="pcre2">(?i)(?:\.ngrok\.io$|\.ngrok-free\.app$|\.ngrok\.app$|\.trycloudflare\.com$|\.serveo\.net$|\.loca\.lt$|\.localhost\.run$|\.pinggy\.link$|\.portmap\.io$|\.playit\.gg$)</field>
+    <description>DNS Query For Reverse Tunneling Service</description>
+    <mitre>
+      <id>T1572</id>
+    </mitre>
+    <info type="text">Sigma rule 5e673848-fdee-42b6-be4a-3b01bab927f5</info>
+    <info type="link">https://attack.mitre.org/techniques/T1572/</info>
+    <options>no_full_log</options>
+    <group>sigma_medium,attack_command-and-control,</group>
+  </rule>
+
+</group>
+
+<group name="opensoc,sigma,network_firewall,">
+
+  <!-- Outbound Connection To Port Commonly Used By Offensive Frameworks | sigma 18a33cac-fa9e-4a1b-b1f5-597bd40d1a94 | rules/network/firewall/net_firewall_outbound_offensive_port.yml -->
+  <rule id="110280" level="8">
+    <if_sid>86600, 86602, 86603, 86604</if_sid>
+    <field name="event_type" type="pcre2">^flow$</field>
+    <field name="dest_port" type="pcre2">(?:^4444$|^4445$|^1337$|^31337$|^12345$|^54321$)</field>
+    <field name="src_ip" type="pcre2">(?i)(?:^10\.|(?:^172\.16\.|^172\.17\.|^172\.18\.|^172\.19\.|^172\.20\.|^172\.21\.|^172\.22\.|^172\.23\.|^172\.24\.|^172\.25\.|^172\.26\.|^172\.27\.|^172\.28\.|^172\.29\.|^172\.30\.|^172\.31\.)|^192\.168\.)</field>
+    <field name="dest_ip" type="pcre2" negate="yes">(?i)(?:^10\.|(?:^172\.16\.|^172\.17\.|^172\.18\.|^172\.19\.|^172\.20\.|^172\.21\.|^172\.22\.|^172\.23\.|^172\.24\.|^172\.25\.|^172\.26\.|^172\.27\.|^172\.28\.|^172\.29\.|^172\.30\.|^172\.31\.)|^192\.168\.|^127\.)</field>
+    <description>Outbound Connection To Port Commonly Used By Offensive Frameworks</description>
+    <mitre>
+      <id>T1571</id>
+    </mitre>
+    <info type="text">Sigma rule 18a33cac-fa9e-4a1b-b1f5-597bd40d1a94</info>
+    <info type="link">https://attack.mitre.org/techniques/T1571/</info>
+    <options>no_full_log</options>
+    <group>sigma_medium,attack_command-and-control,</group>
+  </rule>
+
+  <!-- SMB Connection From Internal Host To The Internet | sigma 0cd92a11-a31c-45c0-b3f2-702862d898c2 | rules/network/firewall/net_firewall_smb_to_internet.yml -->
+  <rule id="110290" level="12">
+    <if_sid>86600, 86602, 86603, 86604</if_sid>
+    <field name="event_type" type="pcre2">^flow$</field>
+    <field name="dest_port" type="pcre2">(?:^445$|^139$)</field>
+    <field name="src_ip" type="pcre2">(?i)(?:^10\.|(?:^172\.16\.|^172\.17\.|^172\.18\.|^172\.19\.|^172\.20\.|^172\.21\.|^172\.22\.|^172\.23\.|^172\.24\.|^172\.25\.|^172\.26\.|^172\.27\.|^172\.28\.|^172\.29\.|^172\.30\.|^172\.31\.)|^192\.168\.)</field>
+    <field name="dest_ip" type="pcre2" negate="yes">(?i)(?:^10\.|(?:^172\.16\.|^172\.17\.|^172\.18\.|^172\.19\.|^172\.20\.|^172\.21\.|^172\.22\.|^172\.23\.|^172\.24\.|^172\.25\.|^172\.26\.|^172\.27\.|^172\.28\.|^172\.29\.|^172\.30\.|^172\.31\.)|^192\.168\.|^127\.|^169\.254\.)</field>
+    <description>SMB Connection From Internal Host To The Internet</description>
+    <mitre>
+      <id>T1187</id>
+      <id>T1048.003</id>
+    </mitre>
+    <info type="text">Sigma rule 0cd92a11-a31c-45c0-b3f2-702862d898c2</info>
+    <info type="link">https://attack.mitre.org/techniques/T1187/</info>
+    <options>no_full_log</options>
+    <group>sigma_high,attack_credential-access,attack_exfiltration,</group>
+  </rule>
+
+</group>
+
+<group name="opensoc,sigma,network_proxy,">
+
+  <!-- Log4Shell JNDI Lookup In HTTP Request | sigma 43d0da84-1557-4c26-b1e2-2f297837f0ad | rules/network/proxy/net_proxy_log4shell_jndi.yml -->
+  <rule id="110300" level="14">
+    <if_sid>86602</if_sid>
+    <field name="http.url" type="pcre2">(?i)(?:\$\{jndi:|%24%7Bjndi:|%24%7Bjndi%3A|\$\{\$\{|%24%7B%24%7B|\$\{::-j\}|\$\{lower:j\}|\$\{upper:j\})</field>
+    <description>Log4Shell JNDI Lookup In HTTP Request (variant 1/2)</description>
+    <mitre>
+      <id>T1190</id>
+    </mitre>
+    <info type="text">Sigma rule 43d0da84-1557-4c26-b1e2-2f297837f0ad</info>
+    <info type="link">https://nvd.nist.gov/vuln/detail/CVE-2021-44228</info>
+    <options>no_full_log</options>
+    <group>sigma_critical,attack_initial-access,</group>
+  </rule>
+  <rule id="110301" level="14">
+    <if_sid>86602</if_sid>
+    <field name="http.http_user_agent" type="pcre2">(?i)(?:\$\{jndi:|%24%7Bjndi:|%24%7Bjndi%3A|\$\{\$\{|%24%7B%24%7B|\$\{::-j\}|\$\{lower:j\}|\$\{upper:j\})</field>
+    <description>Log4Shell JNDI Lookup In HTTP Request (variant 2/2)</description>
+    <mitre>
+      <id>T1190</id>
+    </mitre>
+    <info type="text">Sigma rule 43d0da84-1557-4c26-b1e2-2f297837f0ad</info>
+    <info type="link">https://nvd.nist.gov/vuln/detail/CVE-2021-44228</info>
+    <options>no_full_log</options>
+    <group>sigma_critical,attack_initial-access,</group>
+  </rule>
+
+  <!-- HTTP Request With Offensive Security Tool User-Agent | sigma e25c82ab-48a3-48ce-8bb6-313a62a3b7b4 | rules/network/proxy/net_proxy_offensive_tool_user_agent.yml -->
+  <rule id="110310" level="8">
+    <if_sid>86602</if_sid>
+    <field name="http.http_user_agent" type="pcre2">(?i)(?:sqlmap|Nikto|Nmap Scripting Engine|masscan|WPScan|gobuster|DirBuster|Hydra|nuclei|zgrab|Acunetix|Nessus|OpenVAS|ffuf)</field>
+    <description>HTTP Request With Offensive Security Tool User-Agent</description>
+    <mitre>
+      <id>T1595.002</id>
+    </mitre>
+    <info type="text">Sigma rule e25c82ab-48a3-48ce-8bb6-313a62a3b7b4</info>
+    <info type="link">https://attack.mitre.org/techniques/T1595/002/</info>
+    <options>no_full_log</options>
+    <group>sigma_medium,attack_reconnaissance,</group>
+  </rule>
+
+  <!-- Path Traversal Attempt In HTTP Request | sigma e0372a3a-caae-40b6-bd81-5fecbe2c2f25 | rules/network/proxy/net_proxy_path_traversal.yml -->
+  <rule id="110320" level="8">
+    <if_sid>86602</if_sid>
+    <field name="http.url" type="pcre2">(?i)(?:\.\./\.\./|\.\.%2f|%2e%2e/|%2e%2e%2f|\.\.%5c|%252e%252e%252f|/etc/passwd|/etc/shadow|win\.ini)</field>
+    <description>Path Traversal Attempt In HTTP Request</description>
+    <mitre>
+      <id>T1190</id>
+    </mitre>
+    <info type="text">Sigma rule e0372a3a-caae-40b6-bd81-5fecbe2c2f25</info>
+    <info type="link">https://owasp.org/www-community/attacks/Path_Traversal</info>
+    <options>no_full_log</options>
+    <group>sigma_medium,attack_initial-access,</group>
+  </rule>
+
+</group>
+
+<group name="opensoc,sigma,windows_security,">
+
+  <!-- Security Audit Log Cleared | sigma 0066d221-4527-47dc-acbb-549e685698d3 | rules/windows/builtin/security/win_security_audit_log_cleared.yml -->
+  <rule id="110330" level="12">
+    <if_sid>60001, 60017, 60100, 60101, 60103, 63108, 63109</if_sid>
+    <field name="win.system.eventID" type="pcre2">^1102$</field>
+    <field name="win.system.providerName" type="pcre2">(?i)^Microsoft-Windows-Eventlog$</field>
+    <description>Security Audit Log Cleared</description>
+    <mitre>
+      <id>T1070.001</id>
+    </mitre>
+    <info type="text">Sigma rule 0066d221-4527-47dc-acbb-549e685698d3</info>
+    <info type="link">https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-1102</info>
+    <options>no_full_log</options>
+    <group>sigma_high,attack_defense-impairment,</group>
+  </rule>
+
+  <!-- Active Directory Replication Requested By Non-Machine Account (DCSync) | sigma 550f2dd1-265f-43be-bd68-0a86692e248d | rules/windows/builtin/security/win_security_dcsync_replication.yml -->
+  <rule id="110340" level="12">
+    <if_sid>60001, 60017, 60100, 60101, 60103, 63108, 63109</if_sid>
+    <field name="win.system.eventID" type="pcre2">^4662$</field>
+    <field name="win.eventdata.accessMask" type="pcre2">(?i)^0x100$</field>
+    <field name="win.eventdata.properties" type="pcre2">(?i)(?:1131f6aa-9c07-11d1-f79f-00c04fc2dcd2|1131f6ad-9c07-11d1-f79f-00c04fc2dcd2|89e95b76-444d-4c62-991a-0facbeda640c)</field>
+    <field name="win.eventdata.subjectUserName" type="pcre2" negate="yes">(?i)(?:\$$|^MSOL_)</field>
+    <description>Active Directory Replication Requested By Non-Machine Account (DCSync)</description>
+    <mitre>
+      <id>T1003.006</id>
+    </mitre>
+    <info type="text">Sigma rule 550f2dd1-265f-43be-bd68-0a86692e248d</info>
+    <info type="link">https://attack.mitre.org/techniques/T1003/006/</info>
+    <options>no_full_log</options>
+    <group>sigma_high,attack_credential-access,</group>
+  </rule>
+
+  <!-- Kerberos Service Ticket Requested With RC4 Encryption (Kerberoasting) | sigma 7bffd4f9-8be4-42ab-af95-c101897298ab | rules/windows/builtin/security/win_security_kerberoasting_rc4.yml -->
+  <rule id="110350" level="8">
+    <if_sid>60001, 60017, 60100, 60101, 60103, 63108, 63109</if_sid>
+    <field name="win.system.eventID" type="pcre2">^4769$</field>
+    <field name="win.eventdata.ticketEncryptionType" type="pcre2">(?i)^0x17$</field>
+    <field name="win.eventdata.status" type="pcre2">(?i)^0x0$</field>
+    <field name="win.eventdata.serviceName" type="pcre2" negate="yes">(?i)(?:\$$|^krbtgt$)</field>
+    <description>Kerberos Service Ticket Requested With RC4 Encryption (Kerberoasting)</description>
+    <mitre>
+      <id>T1558.003</id>
+    </mitre>
+    <info type="text">Sigma rule 7bffd4f9-8be4-42ab-af95-c101897298ab</info>
+    <info type="link">https://attack.mitre.org/techniques/T1558/003/</info>
+    <options>no_full_log</options>
+    <group>sigma_medium,attack_credential-access,</group>
+  </rule>
+
+  <!-- Pass-The-Hash Style Logon With Seclogo | sigma 393255ed-95b2-46a7-87c0-1cf0ec50415a | rules/windows/builtin/security/win_security_pass_the_hash_logon.yml -->
+  <rule id="110360" level="8">
+    <if_sid>60001, 60017, 60100, 60101, 60103, 63108, 63109</if_sid>
+    <field name="win.system.eventID" type="pcre2">^4624$</field>
+    <field name="win.eventdata.logonType" type="pcre2">^9$</field>
+    <field name="win.eventdata.logonProcessName" type="pcre2">(?i)^seclogo$</field>
+    <field name="win.eventdata.authenticationPackageName" type="pcre2">(?i)^Negotiate$</field>
+    <description>Pass-The-Hash Style Logon With Seclogo</description>
+    <mitre>
+      <id>T1550.002</id>
+    </mitre>
+    <info type="text">Sigma rule 393255ed-95b2-46a7-87c0-1cf0ec50415a</info>
+    <info type="link">https://attack.mitre.org/techniques/T1550/002/</info>
+    <options>no_full_log</options>
+    <group>sigma_medium,attack_lateral-movement,</group>
+  </rule>
+
+  <!-- Member Added To Highly Privileged Security Group | sigma 64d1c60e-a2da-423b-a914-d91cbb1efeec | rules/windows/builtin/security/win_security_privileged_group_member_added.yml -->
+  <rule id="110370" level="12">
+    <if_sid>60001, 60017, 60100, 60101, 60103, 63108, 63109</if_sid>
+    <field name="win.system.eventID" type="pcre2">(?:^4728$|^4732$|^4756$)</field>
+    <field name="win.eventdata.targetUserName" type="pcre2">(?i)(?:^Administrators$|^Domain Admins$|^Enterprise Admins$|^Schema Admins$|^Backup Operators$|^Account Operators$|^DnsAdmins$)</field>
+    <description>Member Added To Highly Privileged Security Group</description>
+    <mitre>
+      <id>T1098</id>
+    </mitre>
+    <info type="text">Sigma rule 64d1c60e-a2da-423b-a914-d91cbb1efeec</info>
+    <info type="link">https://attack.mitre.org/techniques/T1098/</info>
+    <options>no_full_log</options>
+    <group>sigma_high,attack_persistence,attack_privilege-escalation,</group>
+  </rule>
+
+</group>
+
+<group name="opensoc,sigma,windows_system,">
+
+  <!-- Service Installed With Suspicious Image Path | sigma a4c93706-ae2d-4141-8d56-32faa06fe205 | rules/windows/builtin/system/win_system_suspicious_service_install.yml -->
+  <rule id="110380" level="12">
+    <if_sid>60002, 60007, 60008, 61100, 61101, 61113, 63100, 63101, 63600, 63601</if_sid>
+    <field name="win.system.providerName" type="pcre2">(?i)^Service Control Manager$</field>
+    <field name="win.system.eventID" type="pcre2">^7045$</field>
+    <field name="win.eventdata.imagePath" type="pcre2">(?i)(?:powershell|pwsh|cmd /c|cmd\.exe /c|%COMSPEC%|mshta|rundll32|regsvr32|\\AppData\\|\\Users\\Public\\|\\Windows\\Temp\\|PSEXESVC|\\ADMIN\$\\)</field>
+    <description>Service Installed With Suspicious Image Path</description>
+    <mitre>
+      <id>T1543.003</id>
+      <id>T1569.002</id>
+    </mitre>
+    <info type="text">Sigma rule a4c93706-ae2d-4141-8d56-32faa06fe205</info>
+    <info type="link">https://attack.mitre.org/techniques/T1543/003/</info>
+    <options>no_full_log</options>
+    <group>sigma_high,attack_persistence,attack_privilege-escalation,attack_execution,</group>
+  </rule>
+
+</group>
+
+<group name="opensoc,sigma,windows_file_event,">
+
+  <!-- Script Or Executable Dropped In Startup Folder | sigma 941c230d-4078-47e9-a1fe-e6d90a360700 | rules/windows/file_event/file_event_win_startup_folder_script.yml -->
+  <rule id="110390" level="8">
+    <if_sid>61613, 92216</if_sid>
+    <field name="win.eventdata.targetFilename" type="pcre2">(?i)\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\</field>
+    <field name="win.eventdata.targetFilename" type="pcre2">(?i)(?:\.bat$|\.cmd$|\.vbs$|\.vbe$|\.js$|\.jse$|\.wsf$|\.wsh$|\.ps1$|\.hta$|\.exe$|\.dll$|\.scr$)</field>
+    <description>Script Or Executable Dropped In Startup Folder</description>
+    <mitre>
+      <id>T1547.001</id>
+    </mitre>
+    <info type="text">Sigma rule 941c230d-4078-47e9-a1fe-e6d90a360700</info>
+    <info type="link">https://attack.mitre.org/techniques/T1547/001/</info>
+    <options>no_full_log</options>
+    <group>sigma_medium,attack_persistence,attack_privilege-escalation,</group>
+  </rule>
+
+</group>
+
+<group name="opensoc,sigma,windows_network_connection,">
+
+  <!-- LOLBin Initiating Connection To Public IP Address | sigma a94906d6-b08f-4e36-86c0-64f4a522aceb | rules/windows/network_connection/net_connection_win_lolbin_outbound_public.yml -->
+  <rule id="110400" level="8">
+    <if_sid>61605, 92101, 92108</if_sid>
+    <field name="win.eventdata.initiated" type="pcre2">(?i)^true$</field>
+    <field name="win.eventdata.image" type="pcre2">(?i)(?:\\rundll32\.exe$|\\regsvr32\.exe$|\\mshta\.exe$|\\msiexec\.exe$|\\wscript\.exe$|\\cscript\.exe$|\\certutil\.exe$)</field>
+    <field name="win.eventdata.destinationIp" type="pcre2" negate="yes">(?i)(?:^10\.|(?:^172\.16\.|^172\.17\.|^172\.18\.|^172\.19\.|^172\.20\.|^172\.21\.|^172\.22\.|^172\.23\.|^172\.24\.|^172\.25\.|^172\.26\.|^172\.27\.|^172\.28\.|^172\.29\.|^172\.30\.|^172\.31\.)|^192\.168\.|^127\.|^169\.254\.|(?:^100\.64\.|^100\.65\.|^100\.66\.|^100\.67\.|^100\.68\.|^100\.69\.|^100\.70\.|^100\.71\.|^100\.72\.|^100\.73\.|^100\.74\.|^100\.75\.|^100\.76\.|^100\.77\.|^100\.78\.|^100\.79\.|^100\.80\.|^100\.81\.|^100\.82\.|^100\.83\.|^100\.84\.|^100\.85\.|^100\.86\.|^100\.87\.|^100\.88\.|^100\.89\.|^100\.90\.|^100\.91\.|^100\.92\.|^100\.93\.|^100\.94\.|^100\.95\.|^100\.96\.|^100\.97\.|^100\.98\.|^100\.99\.|^100\.100\.|^100\.101\.|^100\.102\.|^100\.103\.|^100\.104\.|^100\.105\.|^100\.106\.|^100\.107\.|^100\.108\.|^100\.109\.|^100\.110\.|^100\.111\.|^100\.112\.|^100\.113\.|^100\.114\.|^100\.115\.|^100\.116\.|^100\.117\.|^100\.118\.|^100\.119\.|^100\.120\.|^100\.121\.|^100\.122\.|^100\.123\.|^100\.124\.|^100\.125\.|^100\.126\.|^100\.127\.))</field>
+    <description>LOLBin Initiating Connection To Public IP Address</description>
+    <mitre>
+      <id>T1218</id>
+      <id>T1105</id>
+    </mitre>
+    <info type="text">Sigma rule a94906d6-b08f-4e36-86c0-64f4a522aceb</info>
+    <info type="link">https://attack.mitre.org/techniques/T1218/</info>
+    <options>no_full_log</options>
+    <group>sigma_medium,attack_stealth,attack_command-and-control,</group>
+  </rule>
+
+</group>
+
+<group name="opensoc,sigma,windows_ps_script,">
+
+  <!-- AMSI Bypass Attempt In PowerShell Script Block | sigma 0e1febe5-d28d-408d-bac2-3dd4ab5be9ca | rules/windows/powershell/posh_ps_amsi_bypass.yml -->
+  <rule id="110410" level="12">
+    <if_sid>60000, 60001, 60002, 60003, 60004, 60005, 60006, 60007, 60008, 60009, 60010, 60016, 60017, 60018, 60100, 60101, 60103, 60600, 60601, 60609, 60638, 60640, 60648, 60675, 60715, 60723, 60726, 60749, 60770, 60774, 60791, 60795, 60824, 60838, 61026, 61036, 61054, 61063, 61069, 61070, 61100, 61101, 61113, 61600, 61601, 61603, 61604, 61605, 61606, 61607, 61608, 61609, 61610, 61611, 61612, 61613, 61614, 61615, 61616, 61617, 61644, 61645, 61646, 61647, 61648, 61649, 61650, 61651, 61652, 61653, 61654, 61655, 62100, 62101, 62600, 62601, 63100, 63101, 63108, 63109, 63600, 63601, 64100, 64104, 67001, 67002, 91801, 91802, 91807, 91812, 92025, 92028, 92042, 92069, 92101, 92108, 92216, 92300</if_sid>
+    <field name="win.system.channel" type="pcre2">^Microsoft-Windows-PowerShell/Operational$</field>
+    <field name="win.system.eventID" type="pcre2">^4104$</field>
+    <field name="win.eventdata.scriptBlockText" type="pcre2">(?i)(?:System\.Management\.Automation\.AmsiUtils|amsiInitFailed|AmsiScanBuffer|amsiContext|AmsiOpenSession)</field>
+    <description>AMSI Bypass Attempt In PowerShell Script Block</description>
+    <mitre>
+      <id>T1562.001</id>
+    </mitre>
+    <info type="text">Sigma rule 0e1febe5-d28d-408d-bac2-3dd4ab5be9ca</info>
+    <info type="link">https://attack.mitre.org/techniques/T1685/</info>
+    <options>no_full_log</options>
+    <group>sigma_high,attack_defense-impairment,</group>
+  </rule>
+
+  <!-- PowerShell Download Cradle Executed In Memory | sigma ac8bdeb0-3414-40ba-a3fc-1abd01d11ee0 | rules/windows/powershell/posh_ps_download_cradle.yml -->
+  <rule id="110420" level="8">
+    <if_sid>60000, 60001, 60002, 60003, 60004, 60005, 60006, 60007, 60008, 60009, 60010, 60016, 60017, 60018, 60100, 60101, 60103, 60600, 60601, 60609, 60638, 60640, 60648, 60675, 60715, 60723, 60726, 60749, 60770, 60774, 60791, 60795, 60824, 60838, 61026, 61036, 61054, 61063, 61069, 61070, 61100, 61101, 61113, 61600, 61601, 61603, 61604, 61605, 61606, 61607, 61608, 61609, 61610, 61611, 61612, 61613, 61614, 61615, 61616, 61617, 61644, 61645, 61646, 61647, 61648, 61649, 61650, 61651, 61652, 61653, 61654, 61655, 62100, 62101, 62600, 62601, 63100, 63101, 63108, 63109, 63600, 63601, 64100, 64104, 67001, 67002, 91801, 91802, 91807, 91812, 92025, 92028, 92042, 92069, 92101, 92108, 92216, 92300</if_sid>
+    <field name="win.system.channel" type="pcre2">^Microsoft-Windows-PowerShell/Operational$</field>
+    <field name="win.system.eventID" type="pcre2">^4104$</field>
+    <field name="win.eventdata.scriptBlockText" type="pcre2">(?i)(?:\.DownloadString\(|\.DownloadData\(|Invoke-WebRequest|Invoke-RestMethod|iwr )</field>
+    <field name="win.eventdata.scriptBlockText" type="pcre2">(?i)(?:IEX \(|IEX\(|Invoke-Expression|\|IEX|\| IEX)</field>
+    <description>PowerShell Download Cradle Executed In Memory</description>
+    <mitre>
+      <id>T1059.001</id>
+      <id>T1105</id>
+    </mitre>
+    <info type="text">Sigma rule ac8bdeb0-3414-40ba-a3fc-1abd01d11ee0</info>
+    <info type="link">https://attack.mitre.org/techniques/T1059/001/</info>
+    <options>no_full_log</options>
+    <group>sigma_medium,attack_execution,attack_command-and-control,</group>
+  </rule>
+
+</group>
+
+<group name="opensoc,sigma,windows_process_access,">
+
+  <!-- Suspicious Process Access To LSASS Memory | sigma 8505ee25-87a8-429f-957f-ccb5f3eaefac | rules/windows/process_access/proc_access_win_lsass_memory_access.yml -->
+  <rule id="110430" level="12">
+    <if_sid>61612</if_sid>
+    <field name="win.eventdata.targetImage" type="pcre2">(?i)\\lsass\.exe$</field>
+    <field name="win.eventdata.grantedAccess" type="pcre2">(?i)(?:^0x1010$|^0x1410$|^0x1438$|^0x143a$|^0x1f0fff$|^0x1f1fff$|^0x1f3fff$|^0x1fffff$)</field>
+    <field name="win.eventdata.sourceImage" type="pcre2" negate="yes">(?i)(?:^C:\\Windows\\System32\\|^C:\\Windows\\SysWOW64\\|^C:\\Program Files\\Windows Defender\\|^C:\\ProgramData\\Microsoft\\Windows Defender\\Platform\\)</field>
+    <description>Suspicious Process Access To LSASS Memory</description>
+    <mitre>
+      <id>T1003.001</id>
+    </mitre>
+    <info type="text">Sigma rule 8505ee25-87a8-429f-957f-ccb5f3eaefac</info>
+    <info type="link">https://attack.mitre.org/techniques/T1003/001/</info>
+    <options>no_full_log</options>
+    <group>sigma_high,attack_credential-access,</group>
+  </rule>
+
+</group>
+
+<group name="opensoc,sigma,windows_process_creation,">
+
+  <!-- Certutil Used To Download Or Decode Files | sigma 208404a0-90ff-45dc-b574-431caec36bfb | rules/windows/process_creation/proc_creation_win_certutil_download_decode.yml -->
+  <rule id="110440" level="12">
+    <if_sid>61603, 92025, 92028, 92042, 92069</if_sid>
+    <field name="win.eventdata.image" type="pcre2">(?i)\\certutil\.exe$</field>
+    <field name="win.eventdata.commandLine" type="pcre2">(?i)(?:(?: -urlcache | /urlcache | –urlcache | —urlcache | ―urlcache )|(?: -verifyctl | /verifyctl | –verifyctl | —verifyctl | ―verifyctl )|(?: -decode | /decode | –decode | —decode | ―decode )|(?: -decodehex | /decodehex | –decodehex | —decodehex | ―decodehex ))</field>
+    <description>Certutil Used To Download Or Decode Files (variant 1/2)</description>
+    <mitre>
+      <id>T1105</id>
+      <id>T1140</id>
+    </mitre>
+    <info type="text">Sigma rule 208404a0-90ff-45dc-b574-431caec36bfb</info>
+    <info type="link">https://lolbas-project.github.io/lolbas/Binaries/Certutil/</info>
+    <options>no_full_log</options>
+    <group>sigma_high,attack_command-and-control,attack_stealth,</group>
+  </rule>
+  <rule id="110441" level="12">
+    <if_sid>61603, 92025, 92028, 92042, 92069</if_sid>
+    <field name="win.eventdata.originalFileName" type="pcre2">(?i)^CertUtil\.exe$</field>
+    <field name="win.eventdata.commandLine" type="pcre2">(?i)(?:(?: -urlcache | /urlcache | –urlcache | —urlcache | ―urlcache )|(?: -verifyctl | /verifyctl | –verifyctl | —verifyctl | ―verifyctl )|(?: -decode | /decode | –decode | —decode | ―decode )|(?: -decodehex | /decodehex | –decodehex | —decodehex | ―decodehex ))</field>
+    <description>Certutil Used To Download Or Decode Files (variant 2/2)</description>
+    <mitre>
+      <id>T1105</id>
+      <id>T1140</id>
+    </mitre>
+    <info type="text">Sigma rule 208404a0-90ff-45dc-b574-431caec36bfb</info>
+    <info type="link">https://lolbas-project.github.io/lolbas/Binaries/Certutil/</info>
+    <options>no_full_log</options>
+    <group>sigma_high,attack_command-and-control,attack_stealth,</group>
+  </rule>
+
+  <!-- Microsoft Defender Protection Disabled Or Excluded Via PowerShell | sigma 8fff71b5-f537-4baa-b6d1-88c951eb5737 | rules/windows/process_creation/proc_creation_win_defender_tampering_cmdline.yml -->
+  <rule id="110450" level="12">
+    <if_sid>61603, 92025, 92028, 92042, 92069</if_sid>
+    <field name="win.eventdata.commandLine" type="pcre2">(?i)(?:Set-MpPreference|Add-MpPreference)</field>
+    <field name="win.eventdata.commandLine" type="pcre2">(?i)(?:DisableRealtimeMonitoring|DisableBehaviorMonitoring|DisableIOAVProtection|DisableScriptScanning|DisableIntrusionPreventionSystem|ExclusionPath|ExclusionProcess|ExclusionExtension)</field>
+    <description>Microsoft Defender Protection Disabled Or Excluded Via PowerShell</description>
+    <mitre>
+      <id>T1562.001</id>
+    </mitre>
+    <info type="text">Sigma rule 8fff71b5-f537-4baa-b6d1-88c951eb5737</info>
+    <info type="link">https://learn.microsoft.com/en-us/powershell/module/defender/set-mppreference</info>
+    <options>no_full_log</options>
+    <group>sigma_high,attack_defense-impairment,</group>
+  </rule>
+
+  <!-- Mimikatz Module Invocation On Command Line | sigma 0378461c-832f-4ee3-922b-945043917bf3 | rules/windows/process_creation/proc_creation_win_mimikatz_cmdline.yml -->
+  <rule id="110460" level="14">
+    <if_sid>61603, 92025, 92028, 92042, 92069</if_sid>
+    <field name="win.eventdata.commandLine" type="pcre2">(?i)(?:sekurlsa::|lsadump::|kerberos::golden|kerberos::ptt|privilege::debug|token::elevate|crypto::capi|dpapi::|misc::skeleton)</field>
+    <description>Mimikatz Module Invocation On Command Line</description>
+    <mitre>
+      <id>T1003.001</id>
+      <id>T1003.006</id>
+      <id>T1558.001</id>
+    </mitre>
+    <info type="text">Sigma rule 0378461c-832f-4ee3-922b-945043917bf3</info>
+    <info type="link">https://github.com/gentilkiwi/mimikatz/wiki</info>
+    <options>no_full_log</options>
+    <group>sigma_critical,attack_credential-access,</group>
+  </rule>
+
+  <!-- Mshta Executing Remote HTA Or Inline Script | sigma 3aafac14-f690-44ae-95bb-a785bb558e36 | rules/windows/process_creation/proc_creation_win_mshta_remote_inline_script.yml -->
+  <rule id="110470" level="12">
+    <if_sid>61603, 92025, 92028, 92042, 92069</if_sid>
+    <field name="win.eventdata.image" type="pcre2">(?i)\\mshta\.exe$</field>
+    <field name="win.eventdata.commandLine" type="pcre2">(?i)(?:http://|https://|ftp://|javascript:|vbscript:)</field>
+    <description>Mshta Executing Remote HTA Or Inline Script (variant 1/2)</description>
+    <mitre>
+      <id>T1218.005</id>
+    </mitre>
+    <info type="text">Sigma rule 3aafac14-f690-44ae-95bb-a785bb558e36</info>
+    <info type="link">https://lolbas-project.github.io/lolbas/Binaries/Mshta/</info>
+    <options>no_full_log</options>
+    <group>sigma_high,attack_stealth,</group>
+  </rule>
+  <rule id="110471" level="12">
+    <if_sid>61603, 92025, 92028, 92042, 92069</if_sid>
+    <field name="win.eventdata.originalFileName" type="pcre2">(?i)^MSHTA\.EXE$</field>
+    <field name="win.eventdata.commandLine" type="pcre2">(?i)(?:http://|https://|ftp://|javascript:|vbscript:)</field>
+    <description>Mshta Executing Remote HTA Or Inline Script (variant 2/2)</description>
+    <mitre>
+      <id>T1218.005</id>
+    </mitre>
+    <info type="text">Sigma rule 3aafac14-f690-44ae-95bb-a785bb558e36</info>
+    <info type="link">https://lolbas-project.github.io/lolbas/Binaries/Mshta/</info>
+    <options>no_full_log</options>
+    <group>sigma_high,attack_stealth,</group>
+  </rule>
+
+  <!-- User Added To Privileged Group With Net.exe | sigma 202012c9-768f-4c04-8e69-6b85dce54b3e | rules/windows/process_creation/proc_creation_win_net_admin_group_add.yml -->
+  <rule id="110480" level="12">
+    <if_sid>61603, 92025, 92028, 92042, 92069</if_sid>
+    <field name="win.eventdata.image" type="pcre2">(?i)(?:\\net\.exe$|\\net1\.exe$)</field>
+    <field name="win.eventdata.commandLine" type="pcre2">(?i)(?: localgroup | group )</field>
+    <field name="win.eventdata.commandLine" type="pcre2">(?i)(?:administrators|administradores|administrateurs|Remote Desktop Users|Domain Admins|Enterprise Admins)</field>
+    <field name="win.eventdata.commandLine" type="pcre2">(?i)(?: -add| /add| –add| —add| ―add)</field>
+    <description>User Added To Privileged Group With Net.exe (variant 1/2)</description>
+    <mitre>
+      <id>T1098</id>
+    </mitre>
+    <info type="text">Sigma rule 202012c9-768f-4c04-8e69-6b85dce54b3e</info>
+    <info type="link">https://attack.mitre.org/techniques/T1098/</info>
+    <options>no_full_log</options>
+    <group>sigma_high,attack_persistence,attack_privilege-escalation,</group>
+  </rule>
+  <rule id="110481" level="12">
+    <if_sid>61603, 92025, 92028, 92042, 92069</if_sid>
+    <field name="win.eventdata.originalFileName" type="pcre2">(?i)(?:^net\.exe$|^net1\.exe$)</field>
+    <field name="win.eventdata.commandLine" type="pcre2">(?i)(?: localgroup | group )</field>
+    <field name="win.eventdata.commandLine" type="pcre2">(?i)(?:administrators|administradores|administrateurs|Remote Desktop Users|Domain Admins|Enterprise Admins)</field>
+    <field name="win.eventdata.commandLine" type="pcre2">(?i)(?: -add| /add| –add| —add| ―add)</field>
+    <description>User Added To Privileged Group With Net.exe (variant 2/2)</description>
+    <mitre>
+      <id>T1098</id>
+    </mitre>
+    <info type="text">Sigma rule 202012c9-768f-4c04-8e69-6b85dce54b3e</info>
+    <info type="link">https://attack.mitre.org/techniques/T1098/</info>
+    <options>no_full_log</options>
+    <group>sigma_high,attack_persistence,attack_privilege-escalation,</group>
+  </rule>
+
+  <!-- Local Or Domain User Created With Net.exe | sigma ae2311fc-3039-480d-bc4d-f7380f16d94e | rules/windows/process_creation/proc_creation_win_net_user_add.yml -->
+  <rule id="110490" level="8">
+    <if_sid>61603, 92025, 92028, 92042, 92069</if_sid>
+    <field name="win.eventdata.image" type="pcre2">(?i)(?:\\net\.exe$|\\net1\.exe$)</field>
+    <field name="win.eventdata.commandLine" type="pcre2">(?i) user </field>
+    <field name="win.eventdata.commandLine" type="pcre2">(?i)(?: -add| /add| –add| —add| ―add)</field>
+    <description>Local Or Domain User Created With Net.exe (variant 1/2)</description>
+    <mitre>
+      <id>T1136.001</id>
+    </mitre>
+    <info type="text">Sigma rule ae2311fc-3039-480d-bc4d-f7380f16d94e</info>
+    <info type="link">https://attack.mitre.org/techniques/T1136/001/</info>
+    <options>no_full_log</options>
+    <group>sigma_medium,attack_persistence,</group>
+  </rule>
+  <rule id="110491" level="8">
+    <if_sid>61603, 92025, 92028, 92042, 92069</if_sid>
+    <field name="win.eventdata.originalFileName" type="pcre2">(?i)(?:^net\.exe$|^net1\.exe$)</field>
+    <field name="win.eventdata.commandLine" type="pcre2">(?i) user </field>
+    <field name="win.eventdata.commandLine" type="pcre2">(?i)(?: -add| /add| –add| —add| ―add)</field>
+    <description>Local Or Domain User Created With Net.exe (variant 2/2)</description>
+    <mitre>
+      <id>T1136.001</id>
+    </mitre>
+    <info type="text">Sigma rule ae2311fc-3039-480d-bc4d-f7380f16d94e</info>
+    <info type="link">https://attack.mitre.org/techniques/T1136/001/</info>
+    <options>no_full_log</options>
+    <group>sigma_medium,attack_persistence,</group>
+  </rule>
+
+  <!-- NTDS.dit Extraction Via Ntdsutil IFM | sigma a5a8d1e8-8f6c-4aee-ab85-5c8f0b5c2b48 | rules/windows/process_creation/proc_creation_win_ntdsutil_ifm.yml -->
+  <rule id="110500" level="12">
+    <if_sid>61603, 92025, 92028, 92042, 92069</if_sid>
+    <field name="win.eventdata.image" type="pcre2">(?i)\\ntdsutil\.exe$</field>
+    <field name="win.eventdata.commandLine" type="pcre2">(?i)ifm</field>
+    <field name="win.eventdata.commandLine" type="pcre2">(?i)create</field>
+    <description>NTDS.dit Extraction Via Ntdsutil IFM (variant 1/2)</description>
+    <mitre>
+      <id>T1003.003</id>
+    </mitre>
+    <info type="text">Sigma rule a5a8d1e8-8f6c-4aee-ab85-5c8f0b5c2b48</info>
+    <info type="link">https://attack.mitre.org/techniques/T1003/003/</info>
+    <options>no_full_log</options>
+    <group>sigma_high,attack_credential-access,</group>
+  </rule>
+  <rule id="110501" level="12">
+    <if_sid>61603, 92025, 92028, 92042, 92069</if_sid>
+    <field name="win.eventdata.originalFileName" type="pcre2">(?i)^ntdsutil\.exe$</field>
+    <field name="win.eventdata.commandLine" type="pcre2">(?i)ifm</field>
+    <field name="win.eventdata.commandLine" type="pcre2">(?i)create</field>
+    <description>NTDS.dit Extraction Via Ntdsutil IFM (variant 2/2)</description>
+    <mitre>
+      <id>T1003.003</id>
+    </mitre>
+    <info type="text">Sigma rule a5a8d1e8-8f6c-4aee-ab85-5c8f0b5c2b48</info>
+    <info type="link">https://attack.mitre.org/techniques/T1003/003/</info>
+    <options>no_full_log</options>
+    <group>sigma_high,attack_credential-access,</group>
+  </rule>
+
+  <!-- Office Application Spawning Script Interpreter Or LOLBin | sigma a18379ca-9800-4fc3-853a-378d12a382c7 | rules/windows/process_creation/proc_creation_win_office_spawn_shell.yml -->
+  <rule id="110510" level="12">
+    <if_sid>61603, 92025, 92028, 92042, 92069</if_sid>
+    <field name="win.eventdata.parentImage" type="pcre2">(?i)(?:\\WINWORD\.EXE$|\\EXCEL\.EXE$|\\POWERPNT\.EXE$|\\OUTLOOK\.EXE$|\\MSACCESS\.EXE$|\\MSPUB\.EXE$|\\ONENOTE\.EXE$|\\VISIO\.EXE$)</field>
+    <field name="win.eventdata.image" type="pcre2">(?i)(?:\\cmd\.exe$|\\powershell\.exe$|\\pwsh\.exe$|\\wscript\.exe$|\\cscript\.exe$|\\mshta\.exe$|\\rundll32\.exe$|\\regsvr32\.exe$|\\certutil\.exe$|\\bitsadmin\.exe$|\\msiexec\.exe$|\\schtasks\.exe$)</field>
+    <description>Office Application Spawning Script Interpreter Or LOLBin</description>
+    <mitre>
+      <id>T1566.001</id>
+      <id>T1204.002</id>
+    </mitre>
+    <info type="text">Sigma rule a18379ca-9800-4fc3-853a-378d12a382c7</info>
+    <info type="link">https://attack.mitre.org/techniques/T1566/001/</info>
+    <options>no_full_log</options>
+    <group>sigma_high,attack_initial-access,attack_execution,</group>
+  </rule>
+
+  <!-- PowerShell Execution With Encoded Command | sigma efbb075a-1d4d-41d6-8aa2-ec759f25e738 | rules/windows/process_creation/proc_creation_win_powershell_encoded_cmd.yml -->
+  <rule id="110520" level="12">
+    <if_sid>61603, 92025, 92028, 92042, 92069</if_sid>
+    <field name="win.eventdata.image" type="pcre2">(?i)(?:\\powershell\.exe$|\\pwsh\.exe$)</field>
+    <field name="win.eventdata.commandLine" type="pcre2">(?i)(?:(?: -e | /e | –e | —e | ―e )|(?: -en | /en | –en | —en | ―en )|(?: -enc | /enc | –enc | —enc | ―enc )|(?: -enco| /enco| –enco| —enco| ―enco)|(?: -ec | /ec | –ec | —ec | ―ec ))</field>
+    <description>PowerShell Execution With Encoded Command (variant 1/2)</description>
+    <mitre>
+      <id>T1059.001</id>
+      <id>T1027.010</id>
+    </mitre>
+    <info type="text">Sigma rule efbb075a-1d4d-41d6-8aa2-ec759f25e738</info>
+    <info type="link">https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_powershell_exe</info>
+    <options>no_full_log</options>
+    <group>sigma_high,attack_execution,attack_stealth,</group>
+  </rule>
+  <rule id="110521" level="12">
+    <if_sid>61603, 92025, 92028, 92042, 92069</if_sid>
+    <field name="win.eventdata.originalFileName" type="pcre2">(?i)(?:^PowerShell\.EXE$|^pwsh\.dll$)</field>
+    <field name="win.eventdata.commandLine" type="pcre2">(?i)(?:(?: -e | /e | –e | —e | ―e )|(?: -en | /en | –en | —en | ―en )|(?: -enc | /enc | –enc | —enc | ―enc )|(?: -enco| /enco| –enco| —enco| ―enco)|(?: -ec | /ec | –ec | —ec | ―ec ))</field>
+    <description>PowerShell Execution With Encoded Command (variant 2/2)</description>
+    <mitre>
+      <id>T1059.001</id>
+      <id>T1027.010</id>
+    </mitre>
+    <info type="text">Sigma rule efbb075a-1d4d-41d6-8aa2-ec759f25e738</info>
+    <info type="link">https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_powershell_exe</info>
+    <options>no_full_log</options>
+    <group>sigma_high,attack_execution,attack_stealth,</group>
+  </rule>
+
+  <!-- Sensitive Registry Hive Saved With Reg.exe | sigma e11d92d7-a4e8-46a4-a674-19981c7dc2cd | rules/windows/process_creation/proc_creation_win_reg_save_sensitive_hives.yml -->
+  <rule id="110530" level="12">
+    <if_sid>61603, 92025, 92028, 92042, 92069</if_sid>
+    <field name="win.eventdata.image" type="pcre2">(?i)\\reg\.exe$</field>
+    <field name="win.eventdata.commandLine" type="pcre2">(?i)(?: save | export )</field>
+    <field name="win.eventdata.commandLine" type="pcre2">(?i)(?: hklm\\sam| hklm\\security| hklm\\system | HKEY_LOCAL_MACHINE\\SAM| HKEY_LOCAL_MACHINE\\SECURITY| HKEY_LOCAL_MACHINE\\SYSTEM )</field>
+    <description>Sensitive Registry Hive Saved With Reg.exe (variant 1/2)</description>
+    <mitre>
+      <id>T1003.002</id>
+    </mitre>
+    <info type="text">Sigma rule e11d92d7-a4e8-46a4-a674-19981c7dc2cd</info>
+    <info type="link">https://attack.mitre.org/techniques/T1003/002/</info>
+    <options>no_full_log</options>
+    <group>sigma_high,attack_credential-access,</group>
+  </rule>
+  <rule id="110531" level="12">
+    <if_sid>61603, 92025, 92028, 92042, 92069</if_sid>
+    <field name="win.eventdata.originalFileName" type="pcre2">(?i)^reg\.exe$</field>
+    <field name="win.eventdata.commandLine" type="pcre2">(?i)(?: save | export )</field>
+    <field name="win.eventdata.commandLine" type="pcre2">(?i)(?: hklm\\sam| hklm\\security| hklm\\system | HKEY_LOCAL_MACHINE\\SAM| HKEY_LOCAL_MACHINE\\SECURITY| HKEY_LOCAL_MACHINE\\SYSTEM )</field>
+    <description>Sensitive Registry Hive Saved With Reg.exe (variant 2/2)</description>
+    <mitre>
+      <id>T1003.002</id>
+    </mitre>
+    <info type="text">Sigma rule e11d92d7-a4e8-46a4-a674-19981c7dc2cd</info>
+    <info type="link">https://attack.mitre.org/techniques/T1003/002/</info>
+    <options>no_full_log</options>
+    <group>sigma_high,attack_credential-access,</group>
+  </rule>
+
+  <!-- Regsvr32 Loading Remote Or COM Scriptlet (Squiblydoo) | sigma a8865a25-ebd0-49d0-accc-928a5fd12abf | rules/windows/process_creation/proc_creation_win_regsvr32_remote_scriptlet.yml -->
+  <rule id="110540" level="12">
+    <if_sid>61603, 92025, 92028, 92042, 92069</if_sid>
+    <field name="win.eventdata.image" type="pcre2">(?i)\\regsvr32\.exe$</field>
+    <field name="win.eventdata.commandLine" type="pcre2">(?i)(?:scrobj|/i:http|-i:http|/i:ftp|-i:ftp)</field>
+    <description>Regsvr32 Loading Remote Or COM Scriptlet (Squiblydoo) (variant 1/2)</description>
+    <mitre>
+      <id>T1218.010</id>
+    </mitre>
+    <info type="text">Sigma rule a8865a25-ebd0-49d0-accc-928a5fd12abf</info>
+    <info type="link">https://lolbas-project.github.io/lolbas/Binaries/Regsvr32/</info>
+    <options>no_full_log</options>
+    <group>sigma_high,attack_stealth,</group>
+  </rule>
+  <rule id="110541" level="12">
+    <if_sid>61603, 92025, 92028, 92042, 92069</if_sid>
+    <field name="win.eventdata.originalFileName" type="pcre2">(?i)^REGSVR32\.EXE$</field>
+    <field name="win.eventdata.commandLine" type="pcre2">(?i)(?:scrobj|/i:http|-i:http|/i:ftp|-i:ftp)</field>
+    <description>Regsvr32 Loading Remote Or COM Scriptlet (Squiblydoo) (variant 2/2)</description>
+    <mitre>
+      <id>T1218.010</id>
+    </mitre>
+    <info type="text">Sigma rule a8865a25-ebd0-49d0-accc-928a5fd12abf</info>
+    <info type="link">https://lolbas-project.github.io/lolbas/Binaries/Regsvr32/</info>
+    <options>no_full_log</options>
+    <group>sigma_high,attack_stealth,</group>
+  </rule>
+
+  <!-- LSASS Memory Dump Via Comsvcs MiniDump | sigma 011360ed-1d3e-4fd7-b545-d9ea296b45f0 | rules/windows/process_creation/proc_creation_win_rundll32_comsvcs_minidump.yml -->
+  <rule id="110550" level="14">
+    <if_sid>61603, 92025, 92028, 92042, 92069</if_sid>
+    <field name="win.eventdata.image" type="pcre2">(?i)\\rundll32\.exe$</field>
+    <field name="win.eventdata.commandLine" type="pcre2">(?i)comsvcs</field>
+    <field name="win.eventdata.commandLine" type="pcre2">(?i)(?:MiniDump|#24|#\+24|#-4294967272)</field>
+    <description>LSASS Memory Dump Via Comsvcs MiniDump (variant 1/2)</description>
+    <mitre>
+      <id>T1003.001</id>
+      <id>T1218.011</id>
+    </mitre>
+    <info type="text">Sigma rule 011360ed-1d3e-4fd7-b545-d9ea296b45f0</info>
+    <info type="link">https://lolbas-project.github.io/lolbas/Libraries/comsvcs/</info>
+    <options>no_full_log</options>
+    <group>sigma_critical,attack_credential-access,attack_stealth,</group>
+  </rule>
+  <rule id="110551" level="14">
+    <if_sid>61603, 92025, 92028, 92042, 92069</if_sid>
+    <field name="win.eventdata.originalFileName" type="pcre2">(?i)^RUNDLL32\.EXE$</field>
+    <field name="win.eventdata.commandLine" type="pcre2">(?i)comsvcs</field>
+    <field name="win.eventdata.commandLine" type="pcre2">(?i)(?:MiniDump|#24|#\+24|#-4294967272)</field>
+    <description>LSASS Memory Dump Via Comsvcs MiniDump (variant 2/2)</description>
+    <mitre>
+      <id>T1003.001</id>
+      <id>T1218.011</id>
+    </mitre>
+    <info type="text">Sigma rule 011360ed-1d3e-4fd7-b545-d9ea296b45f0</info>
+    <info type="link">https://lolbas-project.github.io/lolbas/Libraries/comsvcs/</info>
+    <options>no_full_log</options>
+    <group>sigma_critical,attack_credential-access,attack_stealth,</group>
+  </rule>
+
+  <!-- Scheduled Task Created With Suspicious Action | sigma cf77b47a-5748-4d6d-bebc-47adb31d3785 | rules/windows/process_creation/proc_creation_win_schtasks_suspicious_create.yml -->
+  <rule id="110560" level="8">
+    <if_sid>61603, 92025, 92028, 92042, 92069</if_sid>
+    <field name="win.eventdata.image" type="pcre2">(?i)\\schtasks\.exe$</field>
+    <field name="win.eventdata.commandLine" type="pcre2">(?i)(?: -create | /create | –create | —create | ―create )</field>
+    <field name="win.eventdata.commandLine" type="pcre2">(?i)(?:\\AppData\\|\\Users\\Public\\|\\Windows\\Temp\\|\\ProgramData\\|powershell|cmd /c|cmd\.exe /c|mshta|rundll32|regsvr32|http://|https://)</field>
+    <description>Scheduled Task Created With Suspicious Action (variant 1/2)</description>
+    <mitre>
+      <id>T1053.005</id>
+    </mitre>
+    <info type="text">Sigma rule cf77b47a-5748-4d6d-bebc-47adb31d3785</info>
+    <info type="link">https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/schtasks-create</info>
+    <options>no_full_log</options>
+    <group>sigma_medium,attack_execution,attack_persistence,attack_privilege-escalation,</group>
+  </rule>
+  <rule id="110561" level="8">
+    <if_sid>61603, 92025, 92028, 92042, 92069</if_sid>
+    <field name="win.eventdata.originalFileName" type="pcre2">(?i)^schtasks\.exe$</field>
+    <field name="win.eventdata.commandLine" type="pcre2">(?i)(?: -create | /create | –create | —create | ―create )</field>
+    <field name="win.eventdata.commandLine" type="pcre2">(?i)(?:\\AppData\\|\\Users\\Public\\|\\Windows\\Temp\\|\\ProgramData\\|powershell|cmd /c|cmd\.exe /c|mshta|rundll32|regsvr32|http://|https://)</field>
+    <description>Scheduled Task Created With Suspicious Action (variant 2/2)</description>
+    <mitre>
+      <id>T1053.005</id>
+    </mitre>
+    <info type="text">Sigma rule cf77b47a-5748-4d6d-bebc-47adb31d3785</info>
+    <info type="link">https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/schtasks-create</info>
+    <options>no_full_log</options>
+    <group>sigma_medium,attack_execution,attack_persistence,attack_privilege-escalation,</group>
+  </rule>
+
+  <!-- Shadow Copies Or Backup Catalog Deletion | sigma 0350899d-4993-4459-918b-b89e5e8c69c0 | rules/windows/process_creation/proc_creation_win_shadow_copy_deletion.yml -->
+  <rule id="110570" level="12">
+    <if_sid>61603, 92025, 92028, 92042, 92069</if_sid>
+    <field name="win.eventdata.image" type="pcre2">(?i)\\vssadmin\.exe$</field>
+    <field name="win.eventdata.commandLine" type="pcre2">(?i)delete</field>
+    <field name="win.eventdata.commandLine" type="pcre2">(?i)shadows</field>
+    <description>Shadow Copies Or Backup Catalog Deletion (variant 1/4)</description>
+    <mitre>
+      <id>T1490</id>
+    </mitre>
+    <info type="text">Sigma rule 0350899d-4993-4459-918b-b89e5e8c69c0</info>
+    <info type="link">https://attack.mitre.org/techniques/T1490/</info>
+    <options>no_full_log</options>
+    <group>sigma_high,attack_impact,</group>
+  </rule>
+  <rule id="110571" level="12">
+    <if_sid>61603, 92025, 92028, 92042, 92069</if_sid>
+    <field name="win.eventdata.image" type="pcre2">(?i)\\wmic\.exe$</field>
+    <field name="win.eventdata.commandLine" type="pcre2">(?i)shadowcopy</field>
+    <field name="win.eventdata.commandLine" type="pcre2">(?i)delete</field>
+    <description>Shadow Copies Or Backup Catalog Deletion (variant 2/4)</description>
+    <mitre>
+      <id>T1490</id>
+    </mitre>
+    <info type="text">Sigma rule 0350899d-4993-4459-918b-b89e5e8c69c0</info>
+    <info type="link">https://attack.mitre.org/techniques/T1490/</info>
+    <options>no_full_log</options>
+    <group>sigma_high,attack_impact,</group>
+  </rule>
+  <rule id="110572" level="12">
+    <if_sid>61603, 92025, 92028, 92042, 92069</if_sid>
+    <field name="win.eventdata.image" type="pcre2">(?i)\\wbadmin\.exe$</field>
+    <field name="win.eventdata.commandLine" type="pcre2">(?i)delete</field>
+    <field name="win.eventdata.commandLine" type="pcre2">(?i)catalog</field>
+    <description>Shadow Copies Or Backup Catalog Deletion (variant 3/4)</description>
+    <mitre>
+      <id>T1490</id>
+    </mitre>
+    <info type="text">Sigma rule 0350899d-4993-4459-918b-b89e5e8c69c0</info>
+    <info type="link">https://attack.mitre.org/techniques/T1490/</info>
+    <options>no_full_log</options>
+    <group>sigma_high,attack_impact,</group>
+  </rule>
+  <rule id="110573" level="12">
+    <if_sid>61603, 92025, 92028, 92042, 92069</if_sid>
+    <field name="win.eventdata.image" type="pcre2">(?i)\\bcdedit\.exe$</field>
+    <field name="win.eventdata.commandLine" type="pcre2">(?i)recoveryenabled</field>
+    <field name="win.eventdata.commandLine" type="pcre2">(?i)no</field>
+    <description>Shadow Copies Or Backup Catalog Deletion (variant 4/4)</description>
+    <mitre>
+      <id>T1490</id>
+    </mitre>
+    <info type="text">Sigma rule 0350899d-4993-4459-918b-b89e5e8c69c0</info>
+    <info type="link">https://attack.mitre.org/techniques/T1490/</info>
+    <options>no_full_log</options>
+    <group>sigma_high,attack_impact,</group>
+  </rule>
+
+  <!-- Windows Event Log Cleared With Wevtutil | sigma 93777461-a692-4d9a-b45b-ca4d5e95d225 | rules/windows/process_creation/proc_creation_win_wevtutil_clear_log.yml -->
+  <rule id="110580" level="12">
+    <if_sid>61603, 92025, 92028, 92042, 92069</if_sid>
+    <field name="win.eventdata.image" type="pcre2">(?i)\\wevtutil\.exe$</field>
+    <field name="win.eventdata.commandLine" type="pcre2">(?i)(?: cl | clear-log )</field>
+    <description>Windows Event Log Cleared With Wevtutil (variant 1/2)</description>
+    <mitre>
+      <id>T1070.001</id>
+    </mitre>
+    <info type="text">Sigma rule 93777461-a692-4d9a-b45b-ca4d5e95d225</info>
+    <info type="link">https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/wevtutil</info>
+    <options>no_full_log</options>
+    <group>sigma_high,attack_defense-impairment,</group>
+  </rule>
+  <rule id="110581" level="12">
+    <if_sid>61603, 92025, 92028, 92042, 92069</if_sid>
+    <field name="win.eventdata.originalFileName" type="pcre2">(?i)^wevtutil\.exe$</field>
+    <field name="win.eventdata.commandLine" type="pcre2">(?i)(?: cl | clear-log )</field>
+    <description>Windows Event Log Cleared With Wevtutil (variant 2/2)</description>
+    <mitre>
+      <id>T1070.001</id>
+    </mitre>
+    <info type="text">Sigma rule 93777461-a692-4d9a-b45b-ca4d5e95d225</info>
+    <info type="link">https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/wevtutil</info>
+    <options>no_full_log</options>
+    <group>sigma_high,attack_defense-impairment,</group>
+  </rule>
+
+  <!-- WMI Provider Host Spawning Shell Or LOLBin | sigma c3da172c-743c-4aeb-aa03-8a2cbf7d003b | rules/windows/process_creation/proc_creation_win_wmiprvse_spawn_shell.yml -->
+  <rule id="110590" level="8">
+    <if_sid>61603, 92025, 92028, 92042, 92069</if_sid>
+    <field name="win.eventdata.parentImage" type="pcre2">(?i)\\WmiPrvSE\.exe$</field>
+    <field name="win.eventdata.image" type="pcre2">(?i)(?:\\cmd\.exe$|\\powershell\.exe$|\\pwsh\.exe$|\\mshta\.exe$|\\rundll32\.exe$|\\regsvr32\.exe$|\\wscript\.exe$|\\cscript\.exe$)</field>
+    <description>WMI Provider Host Spawning Shell Or LOLBin</description>
+    <mitre>
+      <id>T1047</id>
+    </mitre>
+    <info type="text">Sigma rule c3da172c-743c-4aeb-aa03-8a2cbf7d003b</info>
+    <info type="link">https://attack.mitre.org/techniques/T1047/</info>
+    <options>no_full_log</options>
+    <group>sigma_medium,attack_execution,</group>
+  </rule>
+
+  <!-- Active Directory Enumeration With AdFind | sigma b4b3276a-d3e0-46ae-b059-5758e3216370 | rules/windows/process_creation/proc_creation_win_adfind_recon.yml -->
+  <rule id="110610" level="12">
+    <if_sid>61603, 92025, 92028, 92042, 92069</if_sid>
+    <field name="win.eventdata.commandLine" type="pcre2">(?i)(?:objectcategory=computer|objectcategory=person|objectcategory=group|objectcategory=subnet|objectcategory=organizationalUnit|trustdmp|dcmodes|domainlist|-gcb -sc)</field>
+    <description>Active Directory Enumeration With AdFind</description>
+    <mitre>
+      <id>T1087.002</id>
+      <id>T1069.002</id>
+      <id>T1482</id>
+    </mitre>
+    <info type="text">Sigma rule b4b3276a-d3e0-46ae-b059-5758e3216370</info>
+    <info type="link">https://www.joeware.net/freetools/tools/adfind/</info>
+    <options>no_full_log</options>
+    <group>sigma_high,attack_discovery,</group>
+  </rule>
+
+  <!-- Domain Trust Or Domain Controller Discovery With Nltest | sigma 70244858-911b-4f4e-99d1-ad47df64ee20 | rules/windows/process_creation/proc_creation_win_nltest_domain_recon.yml -->
+  <rule id="110620" level="8">
+    <if_sid>61603, 92025, 92028, 92042, 92069</if_sid>
+    <field name="win.eventdata.image" type="pcre2">(?i)\\nltest\.exe$</field>
+    <field name="win.eventdata.commandLine" type="pcre2">(?i)(?:(?: -domain_trusts| /domain_trusts| –domain_trusts| —domain_trusts| ―domain_trusts)|(?: -all_trusts| /all_trusts| –all_trusts| —all_trusts| ―all_trusts)|(?: -trusted_domains| /trusted_domains| –trusted_domains| —trusted_domains| ―trusted_domains)|(?: -dclist:| /dclist:| –dclist:| —dclist:| ―dclist:)|(?: -dsgetdc:| /dsgetdc:| –dsgetdc:| —dsgetdc:| ―dsgetdc:)|(?: -parentdomain| /parentdomain| –parentdomain| —parentdomain| ―parentdomain))</field>
+    <description>Domain Trust Or Domain Controller Discovery With Nltest (variant 1/2)</description>
+    <mitre>
+      <id>T1482</id>
+      <id>T1018</id>
+    </mitre>
+    <info type="text">Sigma rule 70244858-911b-4f4e-99d1-ad47df64ee20</info>
+    <info type="link">https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-server-2012-r2-and-2012/cc731935(v=ws.11)</info>
+    <options>no_full_log</options>
+    <group>sigma_medium,attack_discovery,</group>
+  </rule>
+  <rule id="110621" level="8">
+    <if_sid>61603, 92025, 92028, 92042, 92069</if_sid>
+    <field name="win.eventdata.originalFileName" type="pcre2">(?i)^nltestrk\.exe$</field>
+    <field name="win.eventdata.commandLine" type="pcre2">(?i)(?:(?: -domain_trusts| /domain_trusts| –domain_trusts| —domain_trusts| ―domain_trusts)|(?: -all_trusts| /all_trusts| –all_trusts| —all_trusts| ―all_trusts)|(?: -trusted_domains| /trusted_domains| –trusted_domains| —trusted_domains| ―trusted_domains)|(?: -dclist:| /dclist:| –dclist:| —dclist:| ―dclist:)|(?: -dsgetdc:| /dsgetdc:| –dsgetdc:| —dsgetdc:| ―dsgetdc:)|(?: -parentdomain| /parentdomain| –parentdomain| —parentdomain| ―parentdomain))</field>
+    <description>Domain Trust Or Domain Controller Discovery With Nltest (variant 2/2)</description>
+    <mitre>
+      <id>T1482</id>
+      <id>T1018</id>
+    </mitre>
+    <info type="text">Sigma rule 70244858-911b-4f4e-99d1-ad47df64ee20</info>
+    <info type="link">https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-server-2012-r2-and-2012/cc731935(v=ws.11)</info>
+    <options>no_full_log</options>
+    <group>sigma_medium,attack_discovery,</group>
+  </rule>
+
+</group>
+
+<group name="opensoc,sigma,windows_registry_set,">
+
+  <!-- Run Key Persistence Pointing To Suspicious Location Or Interpreter | sigma fc51e125-0d62-4211-a03d-962e0af0c474 | rules/windows/registry_set/registry_set_win_run_key_suspicious_value.yml -->
+  <rule id="110600" level="8">
+    <if_sid>61615, 92300</if_sid>
+    <field name="win.eventdata.targetObject" type="pcre2">(?i)(?:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run\\|\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\RunOnce\\|\\SOFTWARE\\WOW6432Node\\Microsoft\\Windows\\CurrentVersion\\Run\\)</field>
+    <field name="win.eventdata.details" type="pcre2">(?i)(?:\\AppData\\Local\\Temp\\|\\Windows\\Temp\\|\\Users\\Public\\|powershell|mshta|rundll32|regsvr32|wscript|cscript|cmd\.exe /c|cmd /c|http://|https://)</field>
+    <description>Run Key Persistence Pointing To Suspicious Location Or Interpreter</description>
+    <mitre>
+      <id>T1547.001</id>
+    </mitre>
+    <info type="text">Sigma rule fc51e125-0d62-4211-a03d-962e0af0c474</info>
+    <info type="link">https://attack.mitre.org/techniques/T1547/001/</info>
+    <options>no_full_log</options>
+    <group>sigma_medium,attack_persistence,attack_privilege-escalation,</group>
+  </rule>
+
+</group>

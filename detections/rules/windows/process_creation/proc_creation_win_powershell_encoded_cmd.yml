@@ -1,0 +1,39 @@
+title: PowerShell Execution With Encoded Command
+id: efbb075a-1d4d-41d6-8aa2-ec759f25e738
+status: test
+description: |
+  Detects PowerShell launched with the -EncodedCommand parameter or one of its abbreviations.
+  Attackers wrap payloads in Base64 to hide them from command-line logging and naive string matching.
+references:
+  - https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_powershell_exe
+  - https://attack.mitre.org/techniques/T1027/010/
+author: OpenSOC Detection Engineering
+date: 2026-11-04
+tags:
+  - attack.execution
+  - attack.t1059.001
+  - attack.stealth
+  - attack.t1027.010
+logsource:
+  category: process_creation
+  product: windows
+detection:
+  selection_img:
+    - Image|endswith:
+        - '\powershell.exe'
+        - '\pwsh.exe'
+    - OriginalFileName:
+        - 'PowerShell.EXE'
+        - 'pwsh.dll'
+  selection_cli:
+    CommandLine|contains|windash:
+      - ' -e '
+      - ' -en '
+      - ' -enc '
+      - ' -enco'
+      - ' -ec '
+  condition: all of selection_*
+falsepositives:
+  - Software deployment and RMM agents (SCCM, Intune, NinjaOne...) that wrap their scripts in encoded commands
+  - Administrators running encoded one-liners from automation frameworks
+level: high

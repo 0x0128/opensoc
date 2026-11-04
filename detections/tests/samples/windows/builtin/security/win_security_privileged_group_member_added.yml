@@ -1,0 +1,20 @@
+rule_id: 64d1c60e-a2da-423b-a914-d91cbb1efeec
+cases:
+  - name: User added to Domain Admins
+    expect: match
+    event:
+      EventID: 4728
+      MemberName: 'CN=svc_sql,OU=Service Accounts,DC=opensoc,DC=local'
+      MemberSid: 'S-1-5-21-1111111111-2222222222-3333333333-1607'
+      TargetUserName: 'Domain Admins'
+      TargetDomainName: 'OPENSOC'
+      SubjectUserName: 'jdoe'
+  - name: User added to a regular department group
+    expect: no_match
+    event:
+      EventID: 4728
+      MemberName: 'CN=Ana Lopez,OU=Users,DC=opensoc,DC=local'
+      MemberSid: 'S-1-5-21-1111111111-2222222222-3333333333-2301'
+      TargetUserName: 'Finance-ReadOnly'
+      TargetDomainName: 'OPENSOC'
+      SubjectUserName: 'helpdesk01'

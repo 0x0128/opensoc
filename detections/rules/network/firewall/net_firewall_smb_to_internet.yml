@@ -1,0 +1,36 @@
+title: SMB Connection From Internal Host To The Internet
+id: 0cd92a11-a31c-45c0-b3f2-702862d898c2
+status: test
+description: Detects SMB/NetBIOS sessions (TCP 445/139) from internal hosts to public IP addresses, which leak NTLM credentials to attacker-controlled servers (forced authentication via UNC paths in documents, LNK files or Outlook reminders).
+references:
+  - https://attack.mitre.org/techniques/T1187/
+  - https://msrc.microsoft.com/update-guide/vulnerability/CVE-2023-23397
+author: OpenSOC Detection Engineering
+date: 2026-11-04
+tags:
+  - attack.credential-access
+  - attack.t1187
+  - attack.exfiltration
+  - attack.t1048.003
+logsource:
+  category: firewall
+detection:
+  selection:
+    dst_port:
+      - 445
+      - 139
+    src_ip|cidr:
+      - '10.0.0.0/8'
+      - '172.16.0.0/12'
+      - '192.168.0.0/16'
+  filter_main_internal_destination:
+    dst_ip|cidr:
+      - '10.0.0.0/8'
+      - '172.16.0.0/12'
+      - '192.168.0.0/16'
+      - '127.0.0.0/8'
+      - '169.254.0.0/16'
+  condition: selection and not 1 of filter_main_*
+falsepositives:
+  - Azure Files or other cloud SMB shares accessed directly over the Internet
+level: high

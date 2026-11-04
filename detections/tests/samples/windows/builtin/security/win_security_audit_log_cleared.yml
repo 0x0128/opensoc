@@ -1,0 +1,15 @@
+rule_id: 0066d221-4527-47dc-acbb-549e685698d3
+cases:
+  - name: Security log cleared by an administrator account
+    expect: match
+    event:
+      EventID: 1102
+      Provider_Name: 'Microsoft-Windows-Eventlog'
+      SubjectUserName: 'admin'
+      SubjectDomainName: 'OPENSOC'
+      SubjectLogonId: '0x3e7a2'
+  - name: Event log service shutdown (1100)
+    expect: no_match
+    event:
+      EventID: 1100
+      Provider_Name: 'Microsoft-Windows-Eventlog'

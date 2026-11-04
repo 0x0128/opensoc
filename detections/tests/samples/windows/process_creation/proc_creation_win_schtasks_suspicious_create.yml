@@ -1,0 +1,34 @@
+rule_id: cf77b47a-5748-4d6d-bebc-47adb31d3785
+cases:
+  - name: Task running a binary from AppData every logon
+    expect: match
+    event:
+      Image: 'C:\Windows\System32\schtasks.exe'
+      OriginalFileName: 'schtasks.exe'
+      CommandLine: 'schtasks /create /sc onlogon /tn "OneDrive Sync" /tr "C:\Users\jdoe\AppData\Roaming\sync\odsync.exe" /f'
+      ParentImage: 'C:\Windows\System32\cmd.exe'
+      User: 'OPENSOC\jdoe'
+  - name: Task launching an encoded PowerShell command as SYSTEM
+    expect: match
+    event:
+      Image: 'C:\Windows\System32\schtasks.exe'
+      OriginalFileName: 'schtasks.exe'
+      CommandLine: 'schtasks.exe /Create /RU SYSTEM /SC MINUTE /MO 30 /TN Updater /TR "powershell -nop -w hidden -enc SQBFAFgA"'
+      ParentImage: 'C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe'
+      User: 'OPENSOC\admin'
+  - name: Query of existing tasks
+    expect: no_match
+    event:
+      Image: 'C:\Windows\System32\schtasks.exe'
+      OriginalFileName: 'schtasks.exe'
+      CommandLine: 'schtasks /query /fo LIST /v'
+      ParentImage: 'C:\Windows\System32\cmd.exe'
+      User: 'OPENSOC\admin'
+  - name: Task created for a binary under Program Files
+    expect: no_match
+    event:
+      Image: 'C:\Windows\System32\schtasks.exe'
+      OriginalFileName: 'schtasks.exe'
+      CommandLine: 'schtasks /create /sc daily /tn "Vendor Agent Update" /tr "C:\Program Files\Vendor\agent.exe --update" /st 03:00'
+      ParentImage: 'C:\Windows\System32\msiexec.exe'
+      User: 'NT AUTHORITY\SYSTEM'

@@ -1,0 +1,14 @@
+rule_id: 941c230d-4078-47e9-a1fe-e6d90a360700
+cases:
+  - name: VBScript dropped in the user Startup folder
+    expect: match
+    event:
+      Image: 'C:\Windows\System32\wscript.exe'
+      TargetFilename: 'C:\Users\jdoe\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup\update.vbs'
+      User: 'OPENSOC\jdoe'
+  - name: Shortcut created by an installer
+    expect: no_match
+    event:
+      Image: 'C:\Program Files\Contoso\setup.exe'
+      TargetFilename: 'C:\ProgramData\Microsoft\Windows\Start Menu\Programs\Startup\Contoso Tray.lnk'
+      User: 'NT AUTHORITY\SYSTEM'

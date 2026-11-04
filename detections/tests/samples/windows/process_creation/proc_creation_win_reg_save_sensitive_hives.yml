@@ -1,0 +1,26 @@
+rule_id: e11d92d7-a4e8-46a4-a674-19981c7dc2cd
+cases:
+  - name: SAM hive saved to disk
+    expect: match
+    event:
+      Image: 'C:\Windows\System32\reg.exe'
+      OriginalFileName: 'reg.exe'
+      CommandLine: 'reg save hklm\sam C:\Users\Public\sam.save /y'
+      ParentImage: 'C:\Windows\System32\cmd.exe'
+      User: 'OPENSOC\admin'
+  - name: SYSTEM hive saved (needed to decrypt SAM)
+    expect: match
+    event:
+      Image: 'C:\Windows\System32\reg.exe'
+      OriginalFileName: 'reg.exe'
+      CommandLine: 'reg.exe save HKLM\SYSTEM C:\Users\Public\system.save'
+      ParentImage: 'C:\Windows\System32\cmd.exe'
+      User: 'OPENSOC\admin'
+  - name: Exporting a software configuration key
+    expect: no_match
+    event:
+      Image: 'C:\Windows\System32\reg.exe'
+      OriginalFileName: 'reg.exe'
+      CommandLine: 'reg export "HKLM\SOFTWARE\Contoso\Agent" C:\Backup\agent.reg'
+      ParentImage: 'C:\Windows\System32\cmd.exe'
+      User: 'OPENSOC\admin'

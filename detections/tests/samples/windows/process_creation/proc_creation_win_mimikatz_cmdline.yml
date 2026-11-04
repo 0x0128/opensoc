@@ -1,0 +1,26 @@
+rule_id: 0378461c-832f-4ee3-922b-945043917bf3
+cases:
+  - name: Mimikatz dumping logon passwords
+    expect: match
+    event:
+      Image: 'C:\Users\jdoe\AppData\Local\Temp\m64.exe'
+      CommandLine: 'm64.exe "privilege::debug" "sekurlsa::logonpasswords" exit'
+      ParentImage: 'C:\Windows\System32\cmd.exe'
+      User: 'OPENSOC\jdoe'
+      IntegrityLevel: High
+  - name: DCSync through lsadump module
+    expect: match
+    event:
+      Image: 'C:\ProgramData\x.exe'
+      CommandLine: 'x.exe "lsadump::dcsync /domain:opensoc.local /user:krbtgt" exit'
+      ParentImage: 'C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe'
+      User: 'OPENSOC\jdoe'
+      IntegrityLevel: High
+  - name: klist listing cached Kerberos tickets
+    expect: no_match
+    event:
+      Image: 'C:\Windows\System32\klist.exe'
+      CommandLine: 'klist tickets'
+      ParentImage: 'C:\Windows\System32\cmd.exe'
+      User: 'OPENSOC\jdoe'
+      IntegrityLevel: Medium

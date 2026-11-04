@@ -1,0 +1,20 @@
+rule_id: b994ff92-38aa-46f5-afec-b176da258ab7
+cases:
+  - name: XMRig resolving a Monero pool
+    expect: match
+    event:
+      src_ip: 10.50.1.17
+      src_port: 40012
+      dst_ip: 10.0.0.53
+      dst_port: 53
+      query: gulf.moneroocean.stream
+      record_type: A
+  - name: Resolving a package mirror
+    expect: no_match
+    event:
+      src_ip: 10.50.1.17
+      src_port: 40013
+      dst_ip: 10.0.0.53
+      dst_port: 53
+      query: deb.debian.org
+      record_type: AAAA

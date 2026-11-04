@@ -1,0 +1,27 @@
+title: GCP Logging Sink Or Exclusion Tampering
+id: 84196449-080a-4112-9449-8a1114330f92
+status: test
+description: Detects deletion or modification of Cloud Logging sinks, buckets and exclusion filters, which can stop log export to the SIEM or silently drop audit events.
+references:
+  - https://cloud.google.com/logging/docs/reference/v2/rpc/google.logging.v2
+  - https://attack.mitre.org/techniques/T1685/002/
+author: OpenSOC Detection Engineering
+date: 2026-11-04
+tags:
+  - attack.defense-impairment
+  - attack.t1685.002
+logsource:
+  product: gcp
+  service: gcp.audit
+detection:
+  selection:
+    gcp.audit.method_name:
+      - 'google.logging.v2.ConfigServiceV2.DeleteSink'
+      - 'google.logging.v2.ConfigServiceV2.UpdateSink'
+      - 'google.logging.v2.ConfigServiceV2.DeleteBucket'
+      - 'google.logging.v2.ConfigServiceV2.CreateExclusion'
+      - 'google.logging.v2.ConfigServiceV2.UpdateExclusion'
+  condition: selection
+falsepositives:
+  - Logging architecture changes deployed through infrastructure as code
+level: high

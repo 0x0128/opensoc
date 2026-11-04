@@ -1,0 +1,15 @@
+<!--
+  OpenSOC - TEST-ONLY decoder for wazuh-logtest. Do NOT install on a production manager.
+
+  On a real manager, Windows events arrive from agents through the EventChannel queue
+  and are decoded by the built-in "windows_eventchannel" decoder into the win.system.* /
+  win.eventdata.* fields. wazuh-logtest cannot reach that code path (every request goes
+  through the generic decoders), so this decoder reproduces its output for samples that
+  are already in decoded form ({"win": {...}}). It has the same name and type, so the
+  stock Windows rule tree (60000 -> 60001/60004/... -> our rules) is evaluated unchanged.
+-->
+<decoder name="windows_eventchannel">
+  <type>ossec</type>
+  <prematch>^{"win":</prematch>
+  <plugin_decoder>JSON_Decoder</plugin_decoder>
+</decoder>

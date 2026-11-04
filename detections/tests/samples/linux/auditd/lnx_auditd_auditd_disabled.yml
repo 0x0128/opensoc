@@ -1,0 +1,34 @@
+rule_id: 7a5e1b8d-e331-4782-a063-bc3eb578c1cb
+cases:
+  - name: Auditing disabled with auditctl
+    expect: match
+    event:
+      type: EXECVE
+      a0: auditctl
+      a1: '-e'
+      a2: '0'
+      comm: auditctl
+      exe: /usr/sbin/auditctl
+      uid: 0
+      key: exec
+  - name: auditd stopped through service
+    expect: match
+    event:
+      type: EXECVE
+      a0: service
+      a1: auditd
+      a2: stop
+      comm: service
+      exe: /usr/sbin/service
+      uid: 0
+      key: exec
+  - name: Listing the loaded audit rules
+    expect: no_match
+    event:
+      type: EXECVE
+      a0: auditctl
+      a1: '-l'
+      comm: auditctl
+      exe: /usr/sbin/auditctl
+      uid: 0
+      key: exec

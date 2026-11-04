@@ -1,0 +1,30 @@
+rule_id: 179ef863-c97f-434e-875b-92027cd4112e
+cases:
+  - name: Per-user MFA disabled by an administrator
+    expect: match
+    event:
+      OperationName: Disable Strong Authentication
+      Result: success
+      Category: UserManagement
+      LoggedByService: Core Directory
+      InitiatedBy:
+        user:
+          userPrincipalName: helpdesk01@opensoc.example
+          ipAddress: 203.0.113.140
+      TargetResources:
+        - userPrincipalName: cfo@opensoc.example
+          type: User
+  - name: User registers a new security method
+    expect: no_match
+    event:
+      OperationName: User registered security info
+      Result: success
+      Category: UserManagement
+      LoggedByService: Authentication Methods
+      InitiatedBy:
+        user:
+          userPrincipalName: ana@opensoc.example
+          ipAddress: 198.51.100.10
+      TargetResources:
+        - userPrincipalName: ana@opensoc.example
+          type: User

@@ -1,0 +1,55 @@
+rule_id: 1ddb699e-098c-4fd2-bb64-5c2e4070cae0
+cases:
+  - name: ufw disabled
+    expect: match
+    event:
+      type: EXECVE
+      a0: ufw
+      a1: disable
+      comm: ufw
+      exe: /usr/sbin/ufw
+      uid: 0
+      key: exec
+  - name: firewalld stopped with systemctl
+    expect: match
+    event:
+      type: EXECVE
+      a0: systemctl
+      a1: stop
+      a2: firewalld.service
+      comm: systemctl
+      exe: /usr/bin/systemctl
+      uid: 0
+      key: exec
+  - name: iptables rules flushed
+    expect: match
+    event:
+      type: EXECVE
+      a0: /usr/sbin/iptables
+      a1: '-F'
+      comm: iptables
+      exe: /usr/sbin/iptables
+      uid: 0
+      key: exec
+  - name: Listing iptables rules
+    expect: no_match
+    event:
+      type: EXECVE
+      a0: iptables
+      a1: '-L'
+      a2: '-n'
+      comm: iptables
+      exe: /usr/sbin/iptables
+      uid: 0
+      key: exec
+  - name: Restarting firewalld after a config change
+    expect: no_match
+    event:
+      type: EXECVE
+      a0: systemctl
+      a1: restart
+      a2: firewalld
+      comm: systemctl
+      exe: /usr/bin/systemctl
+      uid: 0
+      key: exec

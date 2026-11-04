@@ -1,0 +1,20 @@
+rule_id: 0e1febe5-d28d-408d-bac2-3dd4ab5be9ca
+cases:
+  - name: Classic amsiInitFailed reflection bypass
+    expect: match
+    event:
+      EventID: 4104
+      MessageNumber: 1
+      MessageTotal: 1
+      ScriptBlockId: '6e2a7b1c-0d4f-4a7e-9c1b-2f3e4d5c6b7a'
+      ScriptBlockText: "[Ref].Assembly.GetType('System.Management.Automation.AmsiUtils').GetField('amsiInitFailed','NonPublic,Static').SetValue($null,$true)"
+      Path: ''
+  - name: Benign script block
+    expect: no_match
+    event:
+      EventID: 4104
+      MessageNumber: 1
+      MessageTotal: 1
+      ScriptBlockId: '0b9c8d7e-6f5a-4b3c-8d2e-1f0a9b8c7d6e'
+      ScriptBlockText: 'Get-Service -Name Spooler | Restart-Service -Force'
+      Path: 'C:\Scripts\Restart-Spooler.ps1'

@@ -1,0 +1,32 @@
+title: Active Directory Replication Requested By Non-Machine Account (DCSync)
+id: 550f2dd1-265f-43be-bd68-0a86692e248d
+status: test
+description: Detects directory service access (Event ID 4662) using the DS-Replication-Get-Changes(-All) extended rights by an account that is not a domain controller, the footprint of a DCSync attack.
+references:
+  - https://attack.mitre.org/techniques/T1003/006/
+  - https://learn.microsoft.com/en-us/windows/win32/adschema/r-ds-replication-get-changes-all
+author: OpenSOC Detection Engineering
+date: 2026-11-04
+tags:
+  - attack.credential-access
+  - attack.t1003.006
+logsource:
+  product: windows
+  service: security
+  definition: 'Requirements: "Audit Directory Service Access" with a SACL on the domain root object'
+detection:
+  selection:
+    EventID: 4662
+    AccessMask: '0x100'
+    Properties|contains:
+      - '1131f6aa-9c07-11d1-f79f-00c04fc2dcd2'
+      - '1131f6ad-9c07-11d1-f79f-00c04fc2dcd2'
+      - '89e95b76-444d-4c62-991a-0facbeda640c'
+  filter_main_machine_accounts:
+    SubjectUserName|endswith: '$'
+  filter_main_aad_connect:
+    SubjectUserName|startswith: 'MSOL_'
+  condition: selection and not 1 of filter_main_*
+falsepositives:
+  - Entra ID Connect / directory synchronisation accounts not following the MSOL_ naming
+level: high

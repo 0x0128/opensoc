@@ -1,0 +1,20 @@
+rule_id: 665f480d-c67e-45c8-8874-c3b19826ca37
+cases:
+  - name: Inbound security rule written
+    expect: match
+    event:
+      operationName: MICROSOFT.NETWORK/NETWORKSECURITYGROUPS/SECURITYRULES/WRITE
+      status: Success
+      caller: ana@opensoc.example
+      callerIpAddress: 203.0.113.140
+      category: Administrative
+      resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/prod-rg/providers/Microsoft.Network/networkSecurityGroups/web-nsg/securityRules/allow-rdp-any
+  - name: NSG configuration read
+    expect: no_match
+    event:
+      operationName: MICROSOFT.NETWORK/NETWORKSECURITYGROUPS/READ
+      status: Success
+      caller: ana@opensoc.example
+      callerIpAddress: 198.51.100.10
+      category: Administrative
+      resourceId: /subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/prod-rg/providers/Microsoft.Network/networkSecurityGroups/web-nsg

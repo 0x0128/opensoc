@@ -1,0 +1,22 @@
+rule_id: a4c93706-ae2d-4141-8d56-32faa06fe205
+cases:
+  - name: Impacket smbexec service
+    expect: match
+    event:
+      EventID: 7045
+      Provider_Name: 'Service Control Manager'
+      ServiceName: 'BTOBTO'
+      ImagePath: '%COMSPEC% /Q /c echo cd ^> \\127.0.0.1\C$\__output 2^>^&1 > %TEMP%\execute.bat & %COMSPEC% /Q /c %TEMP%\execute.bat & del %TEMP%\execute.bat'
+      ServiceType: 'user mode service'
+      StartType: 'demand start'
+      AccountName: 'LocalSystem'
+  - name: Vendor service installed under Program Files
+    expect: no_match
+    event:
+      EventID: 7045
+      Provider_Name: 'Service Control Manager'
+      ServiceName: 'ContosoAgent'
+      ImagePath: '"C:\Program Files\Contoso\Agent\ContosoAgent.exe" -service'
+      ServiceType: 'user mode service'
+      StartType: 'auto start'
+      AccountName: 'LocalSystem'

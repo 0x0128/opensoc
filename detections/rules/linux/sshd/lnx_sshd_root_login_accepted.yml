@@ -1,0 +1,27 @@
+title: Successful SSH Login As Root
+id: 297ae79b-e7af-423d-ac53-cb2e733153e3
+status: stable
+description: Detects successful SSH authentication directly as root (password, public key or keyboard-interactive), which bypasses individual accountability and is forbidden by most hardening baselines.
+references:
+  - https://attack.mitre.org/techniques/T1078/003/
+  - https://attack.mitre.org/techniques/T1021/004/
+author: OpenSOC Detection Engineering
+date: 2026-11-04
+tags:
+  - attack.initial-access
+  - attack.persistence
+  - attack.t1078.003
+  - attack.lateral-movement
+  - attack.t1021.004
+logsource:
+  product: linux
+  service: sshd
+detection:
+  keywords:
+    - 'Accepted password for root from'
+    - 'Accepted publickey for root from'
+    - 'Accepted keyboard-interactive/pam for root from'
+  condition: keywords
+falsepositives:
+  - Break-glass procedures and legacy automation that still logs in as root
+level: medium

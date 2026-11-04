@@ -1,0 +1,32 @@
+title: DNS Query With Abnormally Long Subdomain Label
+id: 757dd1e5-9429-41ed-9334-4e27d43688d4
+status: experimental
+description: Detects DNS queries whose first label is 50 characters or longer, typical of DNS tunneling and data exfiltration tools (iodine, dnscat2, DNSExfiltrator) that encode data in subdomains.
+references:
+  - https://attack.mitre.org/techniques/T1071/004/
+  - https://attack.mitre.org/techniques/T1048/003/
+author: OpenSOC Detection Engineering
+date: 2026-11-04
+tags:
+  - attack.command-and-control
+  - attack.t1071.004
+  - attack.exfiltration
+  - attack.t1048.003
+logsource:
+  category: dns
+detection:
+  selection:
+    query|re: '^[A-Za-z0-9_-]{50,}\.'
+  filter_main_known_long_names:
+    query|endswith:
+      - '.amazonaws.com'
+      - '.akamaiedge.net'
+      - '.cloudapp.azure.com'
+      - '.in-addr.arpa'
+      - '.ip6.arpa'
+      - '.sophosxl.net'
+  condition: selection and not 1 of filter_main_*
+falsepositives:
+  - Security products using DNS for reputation lookups (add their domains to the filter)
+  - CDN and cloud load balancer hostnames
+level: medium

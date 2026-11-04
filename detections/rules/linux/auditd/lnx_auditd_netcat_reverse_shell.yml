@@ -1,0 +1,45 @@
+title: Netcat Spawning A Shell (Reverse Or Bind Shell)
+id: dcfa7d5e-4acc-4b0c-8e69-abf528f7a1eb
+status: test
+description: Detects netcat/ncat executed with an option that attaches a program to the socket (-e, -c, --exec, --sh-exec, --lua-exec), used to obtain reverse or bind shells.
+references:
+  - https://attack.mitre.org/techniques/T1059/004/
+  - https://gtfobins.github.io/gtfobins/nc/
+author: OpenSOC Detection Engineering
+date: 2026-11-04
+tags:
+  - attack.execution
+  - attack.t1059.004
+  - attack.command-and-control
+  - attack.t1571
+logsource:
+  product: linux
+  service: auditd
+  definition: 'Requirements: execve syscalls must be audited (e.g. -a always,exit -F arch=b64 -S execve -k exec)'
+detection:
+  selection_nc:
+    type: 'EXECVE'
+    a0|re: '(^|/)(nc|ncat|netcat|nc\.traditional|nc\.openbsd)$'
+  selection_exec:
+    - a1:
+        - '-e'
+        - '-c'
+        - '--exec'
+        - '--sh-exec'
+        - '--lua-exec'
+    - a2:
+        - '-e'
+        - '-c'
+        - '--exec'
+        - '--sh-exec'
+        - '--lua-exec'
+    - a3:
+        - '-e'
+        - '-c'
+        - '--exec'
+        - '--sh-exec'
+        - '--lua-exec'
+  condition: all of selection_*
+falsepositives:
+  - Network troubleshooting by administrators in lab environments
+level: high

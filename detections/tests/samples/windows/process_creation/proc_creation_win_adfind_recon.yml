@@ -1,0 +1,26 @@
+rule_id: b4b3276a-d3e0-46ae-b059-5758e3216370
+cases:
+  - name: Renamed AdFind dumping all computers
+    expect: match
+    event:
+      Image: 'C:\ProgramData\af.exe'
+      OriginalFileName: 'AdFind.exe'
+      CommandLine: 'af.exe -f (objectcategory=computer) -csv name cn OperatingSystem dNSHostName'
+      ParentImage: 'C:\Windows\System32\cmd.exe'
+      User: 'OPENSOC\jdoe'
+  - name: Trust dump
+    expect: match
+    event:
+      Image: 'C:\Users\Public\adfind.exe'
+      OriginalFileName: 'AdFind.exe'
+      CommandLine: 'adfind.exe -sc trustdmp'
+      ParentImage: 'C:\Windows\System32\cmd.exe'
+      User: 'OPENSOC\jdoe'
+  - name: dsquery for a single user
+    expect: no_match
+    event:
+      Image: 'C:\Windows\System32\dsquery.exe'
+      OriginalFileName: 'dsquery.exe'
+      CommandLine: 'dsquery user -samid jdoe'
+      ParentImage: 'C:\Windows\System32\cmd.exe'
+      User: 'OPENSOC\helpdesk01'

@@ -1,0 +1,14 @@
+rule_id: 297ae79b-e7af-423d-ac53-cb2e733153e3
+cases:
+  - name: Password login as root from the Internet
+    expect: match
+    event:
+      hostname: bastion01
+      pid: 2211
+      message: 'Accepted password for root from 203.0.113.5 port 52211 ssh2'
+  - name: Public key login as a named user
+    expect: no_match
+    event:
+      hostname: bastion01
+      pid: 2212
+      message: 'Accepted publickey for jdoe from 10.20.30.40 port 50022 ssh2: ED25519 SHA256:3fJk1x0zXm2aT0uYd8C4bq9Qw5Y7m1vYk0b2c3d4e5f'

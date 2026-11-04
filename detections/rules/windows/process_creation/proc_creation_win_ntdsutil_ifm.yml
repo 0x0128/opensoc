@@ -1,0 +1,26 @@
+title: NTDS.dit Extraction Via Ntdsutil IFM
+id: a5a8d1e8-8f6c-4aee-ab85-5c8f0b5c2b48
+status: test
+description: Detects ntdsutil creating an Install From Media (IFM) snapshot, which copies NTDS.dit and the SYSTEM hive and allows offline extraction of all domain credentials.
+references:
+  - https://attack.mitre.org/techniques/T1003/003/
+author: OpenSOC Detection Engineering
+date: 2026-11-04
+tags:
+  - attack.credential-access
+  - attack.t1003.003
+logsource:
+  category: process_creation
+  product: windows
+detection:
+  selection_img:
+    - Image|endswith: '\ntdsutil.exe'
+    - OriginalFileName: 'ntdsutil.exe'
+  selection_cli:
+    CommandLine|contains|all:
+      - 'ifm'
+      - 'create'
+  condition: all of selection_*
+falsepositives:
+  - Domain controller promotion from media performed by AD administrators
+level: high

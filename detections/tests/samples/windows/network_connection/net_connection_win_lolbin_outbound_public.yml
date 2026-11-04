@@ -1,0 +1,24 @@
+rule_id: a94906d6-b08f-4e36-86c0-64f4a522aceb
+cases:
+  - name: rundll32 beaconing to an Internet host
+    expect: match
+    event:
+      Image: 'C:\Windows\System32\rundll32.exe'
+      Initiated: 'true'
+      Protocol: tcp
+      SourceIp: '10.20.30.40'
+      SourcePort: 50123
+      DestinationIp: '185.199.110.153'
+      DestinationPort: 443
+      User: 'OPENSOC\jdoe'
+  - name: rundll32 talking to the internal print server
+    expect: no_match
+    event:
+      Image: 'C:\Windows\System32\rundll32.exe'
+      Initiated: 'true'
+      Protocol: tcp
+      SourceIp: '10.20.30.40'
+      SourcePort: 50124
+      DestinationIp: '172.20.1.15'
+      DestinationPort: 445
+      User: 'OPENSOC\jdoe'

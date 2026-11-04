@@ -1,0 +1,26 @@
+rule_id: 8505ee25-87a8-429f-957f-ccb5f3eaefac
+cases:
+  - name: Unknown binary reading LSASS memory
+    expect: match
+    event:
+      SourceImage: 'C:\Users\jdoe\Downloads\procdump64.exe'
+      TargetImage: 'C:\Windows\System32\lsass.exe'
+      GrantedAccess: '0x1fffff'
+      CallTrace: 'C:\Windows\SYSTEM32\ntdll.dll+9d4c4|C:\Windows\System32\KERNELBASE.dll+2c13e|UNKNOWN(00007FF6A1B2C3D4)'
+      SourceUser: 'OPENSOC\jdoe'
+  - name: Windows Defender scanning LSASS
+    expect: no_match
+    event:
+      SourceImage: 'C:\ProgramData\Microsoft\Windows Defender\Platform\4.18.24090.11-0\MsMpEng.exe'
+      TargetImage: 'C:\Windows\System32\lsass.exe'
+      GrantedAccess: '0x1410'
+      CallTrace: 'C:\Windows\SYSTEM32\ntdll.dll+9d4c4|C:\Windows\System32\KERNELBASE.dll+2c13e'
+      SourceUser: 'NT AUTHORITY\SYSTEM'
+  - name: Task manager querying LSASS with limited rights
+    expect: no_match
+    event:
+      SourceImage: 'C:\Users\jdoe\Tools\procexp64.exe'
+      TargetImage: 'C:\Windows\System32\lsass.exe'
+      GrantedAccess: '0x1000'
+      CallTrace: 'C:\Windows\SYSTEM32\ntdll.dll+9d4c4'
+      SourceUser: 'OPENSOC\jdoe'

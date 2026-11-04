@@ -1,0 +1,144 @@
+# OpenSOC detection-as-code pipeline (detections/).
+# Runs on every pull request touching detections/: Sigma validation (sigma-cli + OpenSOC
+# policy), Sigma -> Wazuh conversion with drift check, unit + sample tests, the real
+# wazuh-logtest integration tests and the ATT&CK coverage matrix.
+name: detections
+
+on:
+  pull_request:
+    paths:
+      - "detections/**"
+      - ".github/workflows/detections.yml"
+  push:
+    branches: [main]
+    paths:
+      - "detections/**"
+      - ".github/workflows/detections.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: detections-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: detections
+
+env:
+  PYTHON_VERSION: "3.12"
+  WAZUH_IMAGE: wazuh/wazuh-manager:4.9.2
+
+jobs:
+  validate:
+    name: Validate Sigma rules
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: detections/requirements.txt
+      - name: Install toolchain (pySigma, sigma-cli)
+        run: pip install -r requirements.txt -e .
+      - name: sigma check + OpenSOC policy
+        run: python -m opensoc_detections validate
+
+  convert:
+    name: Convert to Wazuh
+    runs-on: ubuntu-24.04
+    needs: validate
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: detections/requirements.txt
+      - run: pip install -r requirements.txt -e .
+      - name: Committed Wazuh ruleset and rule ID registry are up to date
+        run: python -m opensoc_detections convert --check
+      - name: Convert (artifact)
+        run: python -m opensoc_detections convert --output build/opensoc_sigma_rules.xml
+      - name: sigma-cli plugin (`sigma convert -t opensoc_wazuh`) produces the same ruleset
+        run: |
+          # a regular (non-editable) install registers the sigma.backends.opensoc_wazuh plugin
+          pip install --no-deps .
+          sigma list targets | grep opensoc_wazuh
+          sigma convert -t opensoc_wazuh rules/ -o build/sigma_cli_rules.xml
+          diff -B build/sigma_cli_rules.xml output/wazuh/opensoc_sigma_rules.xml
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wazuh-rules
+          path: detections/build/opensoc_sigma_rules.xml
+
+  test:
+    name: Unit and sample tests
+    runs-on: ubuntu-24.04
+    needs: validate
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: detections/requirements.txt
+      - run: pip install -r requirements.txt -e .
+      - name: pytest (Sigma samples, backend, policy, artifacts)
+        run: python -m pytest -m "not wazuh" --junitxml=reports/unit.xml
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: unit-test-report
+          path: detections/reports/unit.xml
+
+  wazuh-logtest:
+    name: Wazuh integration (wazuh-logtest)
+    runs-on: ubuntu-24.04
+    needs: convert
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: detections/requirements.txt
+      - run: pip install -r requirements.txt -e .
+      - name: Pull Wazuh manager image
+        run: docker pull "$WAZUH_IMAGE"
+      - name: pytest -m wazuh (samples through a real Wazuh manager)
+        env:
+          OPENSOC_REQUIRE_WAZUH: "1"
+          OPENSOC_WAZUH_IMAGE: ${{ env.WAZUH_IMAGE }}
+        run: python -m pytest -m wazuh --junitxml=reports/wazuh.xml
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: wazuh-test-report
+          path: detections/reports/wazuh.xml
+
+  coverage:
+    name: ATT&CK coverage matrix
+    runs-on: ubuntu-24.04
+    needs: convert
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: detections/requirements.txt
+      - run: pip install -r requirements.txt -e .
+      - name: Committed coverage matrix is up to date
+        run: python -m opensoc_detections coverage --check
+      - name: Coverage summary
+        run: sed -n '/^## Summary/,/^## Coverage by technique/p' coverage/COVERAGE.md | sed '$d' >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: attack-coverage
+          path: |
+            detections/coverage/attack_navigator_layer.json
+            detections/coverage/COVERAGE.md

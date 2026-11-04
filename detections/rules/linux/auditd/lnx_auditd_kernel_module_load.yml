@@ -1,0 +1,27 @@
+title: Kernel Module Loaded From File With Insmod Or Modprobe
+id: 77265f15-712d-4270-8b98-8788d3d5e85f
+status: test
+description: Detects insmod/modprobe loading a kernel object file given by path, the way rootkits (Diamorphine, Reptile...) are usually installed.
+references:
+  - https://attack.mitre.org/techniques/T1547/006/
+author: OpenSOC Detection Engineering
+date: 2026-11-04
+tags:
+  - attack.persistence
+  - attack.privilege-escalation
+  - attack.t1547.006
+logsource:
+  product: linux
+  service: auditd
+  definition: 'Requirements: execve syscalls must be audited (e.g. -a always,exit -F arch=b64 -S execve -k exec)'
+detection:
+  selection_tool:
+    type: 'EXECVE'
+    a0|re: '(^|/)(insmod|modprobe)$'
+  selection_object:
+    - a1|endswith: '.ko'
+    - a2|endswith: '.ko'
+  condition: all of selection_*
+falsepositives:
+  - DKMS or vendor driver installation scripts
+level: medium

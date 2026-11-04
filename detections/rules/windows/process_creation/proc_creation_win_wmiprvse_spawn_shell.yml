@@ -1,0 +1,30 @@
+title: WMI Provider Host Spawning Shell Or LOLBin
+id: c3da172c-743c-4aeb-aa03-8a2cbf7d003b
+status: test
+description: Detects WmiPrvSE.exe spawning command interpreters or LOLBins, the footprint of remote execution through WMI (wmic process call create, Impacket wmiexec, CrackMapExec).
+references:
+  - https://attack.mitre.org/techniques/T1047/
+author: OpenSOC Detection Engineering
+date: 2026-11-04
+tags:
+  - attack.execution
+  - attack.t1047
+logsource:
+  category: process_creation
+  product: windows
+detection:
+  selection:
+    ParentImage|endswith: '\WmiPrvSE.exe'
+    Image|endswith:
+      - '\cmd.exe'
+      - '\powershell.exe'
+      - '\pwsh.exe'
+      - '\mshta.exe'
+      - '\rundll32.exe'
+      - '\regsvr32.exe'
+      - '\wscript.exe'
+      - '\cscript.exe'
+  condition: selection
+falsepositives:
+  - Systems management platforms (SCCM, monitoring agents) executing scripts through WMI
+level: medium

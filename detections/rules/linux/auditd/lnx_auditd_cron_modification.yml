@@ -1,0 +1,35 @@
+title: Cron Configuration Modified
+id: 8666117b-7651-44d5-9050-e3517a83defe
+status: test
+description: Detects writes to system or user crontabs, a simple and common Linux persistence mechanism.
+references:
+  - https://attack.mitre.org/techniques/T1053/003/
+author: OpenSOC Detection Engineering
+date: 2026-11-04
+tags:
+  - attack.execution
+  - attack.persistence
+  - attack.privilege-escalation
+  - attack.t1053.003
+logsource:
+  product: linux
+  service: auditd
+  definition: 'Requirements: watch rules on cron paths (e.g. -w /etc/crontab -p wa -k cron, -w /etc/cron.d/ -p wa -k cron, -w /var/spool/cron/ -p wa -k cron)'
+detection:
+  selection:
+    type: 'PATH'
+    name|startswith:
+      - '/etc/cron'
+      - '/var/spool/cron/'
+  filter_main_package_managers:
+    comm|startswith:
+      - 'dpkg'
+      - 'rpm'
+      - 'yum'
+      - 'dnf'
+      - 'apt'
+      - 'unattended'
+  condition: selection and not 1 of filter_main_*
+falsepositives:
+  - Administrators editing crontabs with crontab -e or configuration management (Ansible, Puppet, Chef)
+level: medium

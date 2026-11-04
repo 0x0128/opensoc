@@ -1,0 +1,26 @@
+title: SSH Authorized Keys File Modified
+id: 05c40e68-9a51-43a1-9e11-953d91a23c82
+status: test
+description: Detects writes to authorized_keys files, used to plant an attacker SSH key for persistent access.
+references:
+  - https://attack.mitre.org/techniques/T1098/004/
+author: OpenSOC Detection Engineering
+date: 2026-11-04
+tags:
+  - attack.persistence
+  - attack.privilege-escalation
+  - attack.t1098.004
+logsource:
+  product: linux
+  service: auditd
+  definition: 'Requirements: watch rules on authorized_keys files (e.g. -w /root/.ssh/authorized_keys -p wa -k ssh_keys)'
+detection:
+  selection:
+    type: 'PATH'
+    name|endswith:
+      - '/.ssh/authorized_keys'
+      - '/.ssh/authorized_keys2'
+  condition: selection
+falsepositives:
+  - ssh-copy-id, cloud-init and configuration management deploying keys
+level: medium

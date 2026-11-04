@@ -1,0 +1,18 @@
+rule_id: 93777461-a692-4d9a-b45b-ca4d5e95d225
+cases:
+  - name: Security log cleared with wevtutil
+    expect: match
+    event:
+      Image: 'C:\Windows\System32\wevtutil.exe'
+      OriginalFileName: 'wevtutil.exe'
+      CommandLine: 'wevtutil.exe cl Security'
+      ParentImage: 'C:\Windows\System32\cmd.exe'
+      User: 'OPENSOC\admin'
+  - name: Exporting the System log
+    expect: no_match
+    event:
+      Image: 'C:\Windows\System32\wevtutil.exe'
+      OriginalFileName: 'wevtutil.exe'
+      CommandLine: 'wevtutil.exe epl System C:\Logs\system.evtx'
+      ParentImage: 'C:\Windows\System32\cmd.exe'
+      User: 'OPENSOC\admin'

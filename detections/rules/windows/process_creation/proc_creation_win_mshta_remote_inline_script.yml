@@ -1,0 +1,30 @@
+title: Mshta Executing Remote HTA Or Inline Script
+id: 3aafac14-f690-44ae-95bb-a785bb558e36
+status: test
+description: Detects mshta.exe launched with a URL or inline javascript/vbscript protocol handler, commonly used by phishing payloads and loaders.
+references:
+  - https://lolbas-project.github.io/lolbas/Binaries/Mshta/
+  - https://attack.mitre.org/techniques/T1218/005/
+author: OpenSOC Detection Engineering
+date: 2026-11-04
+tags:
+  - attack.stealth
+  - attack.t1218.005
+logsource:
+  category: process_creation
+  product: windows
+detection:
+  selection_img:
+    - Image|endswith: '\mshta.exe'
+    - OriginalFileName: 'MSHTA.EXE'
+  selection_cli:
+    CommandLine|contains:
+      - 'http://'
+      - 'https://'
+      - 'ftp://'
+      - 'javascript:'
+      - 'vbscript:'
+  condition: all of selection_*
+falsepositives:
+  - Legacy intranet HTA applications served over HTTP
+level: high

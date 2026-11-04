@@ -1,0 +1,5 @@
+# Pinned toolchain used locally and in CI (.github/workflows/detections.yml)
+pySigma==2.0.2
+sigma-cli==4.0.0
+PyYAML==6.0.3
+pytest==9.2.0

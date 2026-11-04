@@ -1,0 +1,28 @@
+rule_id: 7b24c6b2-75cc-42c7-a973-ef3eb77c5b69
+cases:
+  - name: GuardDuty detector deleted
+    expect: match
+    event:
+      eventSource: guardduty.amazonaws.com
+      eventName: DeleteDetector
+      eventTime: '2026-11-04T11:00:00Z'
+      sourceIPAddress: 203.0.113.140
+      userAgent: aws-cli/2.17.0
+      userIdentity:
+        type: IAMUser
+        arn: 'arn:aws:iam::111122223333:user/ana'
+      requestParameters:
+        detectorId: 12abc34d567e8fa901bc2d34e56789f0
+  - name: GuardDuty findings listed
+    expect: no_match
+    event:
+      eventSource: guardduty.amazonaws.com
+      eventName: ListFindings
+      eventTime: '2026-11-04T11:01:00Z'
+      sourceIPAddress: 198.51.100.10
+      userAgent: aws-cli/2.17.0
+      userIdentity:
+        type: IAMUser
+        arn: 'arn:aws:iam::111122223333:user/secops'
+      requestParameters:
+        detectorId: 12abc34d567e8fa901bc2d34e56789f0

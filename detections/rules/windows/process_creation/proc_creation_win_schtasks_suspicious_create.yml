@@ -1,0 +1,41 @@
+title: Scheduled Task Created With Suspicious Action
+id: cf77b47a-5748-4d6d-bebc-47adb31d3785
+status: test
+description: Detects schtasks.exe creating a task whose action runs from user-writable folders, launches a script interpreter or LOLBin, or references a URL.
+references:
+  - https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/schtasks-create
+  - https://attack.mitre.org/techniques/T1053/005/
+author: OpenSOC Detection Engineering
+date: 2026-11-04
+tags:
+  - attack.execution
+  - attack.persistence
+  - attack.privilege-escalation
+  - attack.t1053.005
+logsource:
+  category: process_creation
+  product: windows
+detection:
+  selection_img:
+    - Image|endswith: '\schtasks.exe'
+    - OriginalFileName: 'schtasks.exe'
+  selection_create:
+    CommandLine|contains|windash: ' -create '
+  selection_action:
+    CommandLine|contains:
+      - '\AppData\'
+      - '\Users\Public\'
+      - '\Windows\Temp\'
+      - '\ProgramData\'
+      - 'powershell'
+      - 'cmd /c'
+      - 'cmd.exe /c'
+      - 'mshta'
+      - 'rundll32'
+      - 'regsvr32'
+      - 'http://'
+      - 'https://'
+  condition: all of selection_*
+falsepositives:
+  - Software updaters (browsers, collaboration tools) that install per-user tasks under AppData
+level: medium

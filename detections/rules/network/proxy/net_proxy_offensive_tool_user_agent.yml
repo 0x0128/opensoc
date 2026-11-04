@@ -1,0 +1,34 @@
+title: HTTP Request With Offensive Security Tool User-Agent
+id: e25c82ab-48a3-48ce-8bb6-313a62a3b7b4
+status: test
+description: Detects HTTP requests whose User-Agent identifies vulnerability scanners and attack tools (sqlmap, Nikto, Nmap NSE, nuclei, WPScan, gobuster...), an indicator of active reconnaissance against exposed services.
+references:
+  - https://attack.mitre.org/techniques/T1595/002/
+author: OpenSOC Detection Engineering
+date: 2026-11-04
+tags:
+  - attack.reconnaissance
+  - attack.t1595.002
+logsource:
+  category: proxy
+detection:
+  selection:
+    c-useragent|contains:
+      - 'sqlmap'
+      - 'Nikto'
+      - 'Nmap Scripting Engine'
+      - 'masscan'
+      - 'WPScan'
+      - 'gobuster'
+      - 'DirBuster'
+      - 'Hydra'
+      - 'nuclei'
+      - 'zgrab'
+      - 'Acunetix'
+      - 'Nessus'
+      - 'OpenVAS'
+      - 'ffuf'
+  condition: selection
+falsepositives:
+  - Authorized vulnerability scanning and penetration tests (whitelist scanner source addresses)
+level: medium

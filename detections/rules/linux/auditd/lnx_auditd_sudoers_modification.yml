@@ -1,0 +1,31 @@
+title: Sudoers Configuration Modified
+id: 73f771ad-d660-46d2-a469-c743e8430c62
+status: test
+description: Detects writes to /etc/sudoers or files under /etc/sudoers.d, which attackers modify to grant themselves passwordless root access.
+references:
+  - https://attack.mitre.org/techniques/T1548/003/
+author: OpenSOC Detection Engineering
+date: 2026-11-04
+tags:
+  - attack.privilege-escalation
+  - attack.t1548.003
+logsource:
+  product: linux
+  service: auditd
+  definition: 'Requirements: watch rules (e.g. -w /etc/sudoers -p wa -k sudoers, -w /etc/sudoers.d/ -p wa -k sudoers)'
+detection:
+  selection:
+    type: 'PATH'
+    name|startswith:
+      - '/etc/sudoers'
+  filter_main_package_managers:
+    comm|startswith:
+      - 'dpkg'
+      - 'rpm'
+      - 'yum'
+      - 'dnf'
+      - 'apt'
+  condition: selection and not 1 of filter_main_*
+falsepositives:
+  - Administrators using visudo and configuration management tooling
+level: high

@@ -1,0 +1,26 @@
+title: AWS Security Group Ingress Opened To The Internet
+id: 1c8fa090-2509-4d02-b265-8ebbc400987c
+status: test
+description: Detects security group ingress rules authorizing traffic from 0.0.0.0/0 or ::/0, which exposes instances to the whole Internet.
+references:
+  - https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_AuthorizeSecurityGroupIngress.html
+  - https://attack.mitre.org/techniques/T1686/001/
+author: OpenSOC Detection Engineering
+date: 2026-11-04
+tags:
+  - attack.defense-impairment
+  - attack.t1686.001
+logsource:
+  product: aws
+  service: cloudtrail
+detection:
+  selection:
+    eventSource: 'ec2.amazonaws.com'
+    eventName: 'AuthorizeSecurityGroupIngress'
+    requestParameters.ipPermissions.items|contains:
+      - '0.0.0.0/0'
+      - '::/0'
+  condition: selection
+falsepositives:
+  - Public load balancers and web front-ends that intentionally allow 80/443 from anywhere
+level: medium

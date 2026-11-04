@@ -1,0 +1,44 @@
+rule_id: 1c8fa090-2509-4d02-b265-8ebbc400987c
+cases:
+  - name: SSH opened to 0.0.0.0/0
+    expect: match
+    event:
+      eventSource: ec2.amazonaws.com
+      eventName: AuthorizeSecurityGroupIngress
+      eventTime: '2026-11-04T12:00:00Z'
+      sourceIPAddress: 203.0.113.140
+      userAgent: aws-cli/2.17.0
+      userIdentity:
+        type: IAMUser
+        arn: 'arn:aws:iam::111122223333:user/ana'
+      requestParameters:
+        groupId: sg-0a1b2c3d4e5f67890
+        ipPermissions:
+          items:
+            - ipProtocol: tcp
+              fromPort: 22
+              toPort: 22
+              ipRanges:
+                items:
+                  - cidrIp: 0.0.0.0/0
+  - name: Ingress allowed from the corporate VPN range
+    expect: no_match
+    event:
+      eventSource: ec2.amazonaws.com
+      eventName: AuthorizeSecurityGroupIngress
+      eventTime: '2026-11-04T12:05:00Z'
+      sourceIPAddress: 198.51.100.10
+      userAgent: aws-cli/2.17.0
+      userIdentity:
+        type: IAMUser
+        arn: 'arn:aws:iam::111122223333:user/netops'
+      requestParameters:
+        groupId: sg-0a1b2c3d4e5f67890
+        ipPermissions:
+          items:
+            - ipProtocol: tcp
+              fromPort: 22
+              toPort: 22
+              ipRanges:
+                items:
+                  - cidrIp: 10.8.0.0/16

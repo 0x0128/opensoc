@@ -1,0 +1,35 @@
+title: Mimikatz Module Invocation On Command Line
+id: 0378461c-832f-4ee3-922b-945043917bf3
+status: test
+description: Detects well-known Mimikatz module::command pairs passed on the command line, used to dump credentials, forge Kerberos tickets or patch LSASS.
+references:
+  - https://github.com/gentilkiwi/mimikatz/wiki
+  - https://attack.mitre.org/software/S0002/
+author: OpenSOC Detection Engineering
+date: 2026-11-04
+tags:
+  - attack.credential-access
+  - attack.t1003.001
+  - attack.t1003.006
+  - attack.t1558.001
+  - attack.s0002
+logsource:
+  category: process_creation
+  product: windows
+detection:
+  selection:
+    CommandLine|contains:
+      - 'sekurlsa::'
+      - 'lsadump::'
+      - 'kerberos::golden'
+      - 'kerberos::ptt'
+      - 'privilege::debug'
+      - 'token::elevate'
+      - 'crypto::capi'
+      - 'dpapi::'
+      - 'misc::skeleton'
+  condition: selection
+falsepositives:
+  - Authorized red team or penetration testing activity
+  - Security training labs
+level: critical

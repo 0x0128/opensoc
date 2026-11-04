@@ -1,0 +1,11 @@
+# sigma-cli `sigma check` configuration (pySigma validators).
+# Used by `python -m opensoc_detections validate` and CI.
+validators:
+  - all
+  # OpenSOC rules carry no D3FEND tags; this validator would only add a network
+  # download of the D3FEND ontology to every run.
+  - -d3_fendtag
+  # TLP v1 and v2 validators are mutually exclusive; OpenSOC uses TLP v2 when needed.
+  - -tlpv1_tag
+exclusions: {}
+config: {}

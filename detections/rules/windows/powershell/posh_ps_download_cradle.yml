@@ -1,0 +1,37 @@
+title: PowerShell Download Cradle Executed In Memory
+id: ac8bdeb0-3414-40ba-a3fc-1abd01d11ee0
+status: test
+description: Detects script blocks that download content from the network and immediately execute it with Invoke-Expression (IEX), the classic fileless download cradle.
+references:
+  - https://attack.mitre.org/techniques/T1059/001/
+  - https://attack.mitre.org/techniques/T1105/
+author: OpenSOC Detection Engineering
+date: 2026-11-04
+tags:
+  - attack.execution
+  - attack.t1059.001
+  - attack.command-and-control
+  - attack.t1105
+logsource:
+  category: ps_script
+  product: windows
+  definition: 'Requirements: PowerShell Script Block Logging (Event ID 4104) must be enabled'
+detection:
+  selection_download:
+    ScriptBlockText|contains:
+      - '.DownloadString('
+      - '.DownloadData('
+      - 'Invoke-WebRequest'
+      - 'Invoke-RestMethod'
+      - 'iwr '
+  selection_exec:
+    ScriptBlockText|contains:
+      - 'IEX ('
+      - 'IEX('
+      - 'Invoke-Expression'
+      - '|IEX'
+      - '| IEX'
+  condition: all of selection_*
+falsepositives:
+  - Installers of package managers (e.g. Chocolatey, Scoop) that are bootstrapped with a download cradle
+level: medium

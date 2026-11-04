@@ -1,0 +1,26 @@
+title: Setuid Or Setgid Bit Set With Chmod
+id: 91797930-3a35-4b69-a6c5-d0f1aa89946c
+status: test
+description: Detects chmod setting the setuid/setgid bit (u+s, g+s, 4755, 6755...), used to leave a privileged backdoor binary such as a SUID copy of a shell.
+references:
+  - https://attack.mitre.org/techniques/T1548/001/
+author: OpenSOC Detection Engineering
+date: 2026-11-04
+tags:
+  - attack.privilege-escalation
+  - attack.t1548.001
+logsource:
+  product: linux
+  service: auditd
+  definition: 'Requirements: execve syscalls must be audited (e.g. -a always,exit -F arch=b64 -S execve -k exec)'
+detection:
+  selection_chmod:
+    type: 'EXECVE'
+    a0|re: '(^|/)chmod$'
+  selection_mode:
+    - a1|re: '^([ugoa]*\+[rwxXt]*s[rwxXt]*|[2467][0-7]{3})$'
+    - a2|re: '^([ugoa]*\+[rwxXt]*s[rwxXt]*|[2467][0-7]{3})$'
+  condition: all of selection_*
+falsepositives:
+  - Package post-install scripts setting permissions on privileged helpers
+level: medium

@@ -1,0 +1,41 @@
+title: Shell History Or System Logs Deleted
+id: a44a76ab-5c96-49d8-b9ec-a4b5477e50e8
+status: test
+description: Detects rm, shred, truncate or unlink run against shell history files or authentication/system logs to hide attacker activity.
+references:
+  - https://attack.mitre.org/techniques/T1070/003/
+  - https://attack.mitre.org/techniques/T1685/006/
+author: OpenSOC Detection Engineering
+date: 2026-11-04
+tags:
+  - attack.stealth
+  - attack.t1070.003
+  - attack.defense-impairment
+  - attack.t1685.006
+logsource:
+  product: linux
+  service: auditd
+  definition: 'Requirements: execve syscalls must be audited (e.g. -a always,exit -F arch=b64 -S execve -k exec)'
+detection:
+  selection_tool:
+    type: 'EXECVE'
+    a0|re: '(^|/)(rm|shred|truncate|unlink)$'
+  selection_target:
+    - a1|contains: &targets
+        - '.bash_history'
+        - '.zsh_history'
+        - '/var/log/wtmp'
+        - '/var/log/btmp'
+        - '/var/log/lastlog'
+        - '/var/log/auth.log'
+        - '/var/log/secure'
+        - '/var/log/syslog'
+        - '/var/log/messages'
+        - '/var/log/audit/'
+    - a2|contains: *targets
+    - a3|contains: *targets
+    - a4|contains: *targets
+  condition: all of selection_*
+falsepositives:
+  - Log rotation scripts run manually; logrotate itself does not use these tools
+level: high

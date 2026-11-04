@@ -1,0 +1,34 @@
+title: Microsoft Defender Protection Disabled Or Excluded Via PowerShell
+id: 8fff71b5-f537-4baa-b6d1-88c951eb5737
+status: test
+description: Detects Set-MpPreference / Add-MpPreference used to disable Microsoft Defender protections or to add exclusions, a common step before deploying malware.
+references:
+  - https://learn.microsoft.com/en-us/powershell/module/defender/set-mppreference
+  - https://attack.mitre.org/techniques/T1685/
+author: OpenSOC Detection Engineering
+date: 2026-11-04
+tags:
+  - attack.defense-impairment
+  - attack.t1685
+logsource:
+  category: process_creation
+  product: windows
+detection:
+  selection_cmdlet:
+    CommandLine|contains:
+      - 'Set-MpPreference'
+      - 'Add-MpPreference'
+  selection_param:
+    CommandLine|contains:
+      - 'DisableRealtimeMonitoring'
+      - 'DisableBehaviorMonitoring'
+      - 'DisableIOAVProtection'
+      - 'DisableScriptScanning'
+      - 'DisableIntrusionPreventionSystem'
+      - 'ExclusionPath'
+      - 'ExclusionProcess'
+      - 'ExclusionExtension'
+  condition: all of selection_*
+falsepositives:
+  - Endpoint management applying approved Defender exclusions (should come from the management agent)
+level: high

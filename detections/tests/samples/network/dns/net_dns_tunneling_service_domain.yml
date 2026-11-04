@@ -1,0 +1,20 @@
+rule_id: 5e673848-fdee-42b6-be4a-3b01bab927f5
+cases:
+  - name: Workstation resolving a Cloudflare quick tunnel
+    expect: match
+    event:
+      src_ip: 10.20.30.40
+      src_port: 53211
+      dst_ip: 10.0.0.53
+      dst_port: 53
+      query: bright-otter-calm-lake.trycloudflare.com
+      record_type: A
+  - name: Resolving the corporate Cloudflare-hosted site
+    expect: no_match
+    event:
+      src_ip: 10.20.30.40
+      src_port: 53212
+      dst_ip: 10.0.0.53
+      dst_port: 53
+      query: www.cloudflare.com
+      record_type: A

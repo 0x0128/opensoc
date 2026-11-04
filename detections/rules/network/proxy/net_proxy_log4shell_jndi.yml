@@ -1,0 +1,32 @@
+title: Log4Shell JNDI Lookup In HTTP Request
+id: 43d0da84-1557-4c26-b1e2-2f297837f0ad
+status: stable
+description: Detects JNDI lookup strings (and common obfuscations) in the URI or User-Agent of HTTP requests, used to exploit Log4j CVE-2021-44228 and similar JNDI injection flaws.
+references:
+  - https://nvd.nist.gov/vuln/detail/CVE-2021-44228
+  - https://attack.mitre.org/techniques/T1190/
+author: OpenSOC Detection Engineering
+date: 2026-11-04
+tags:
+  - attack.initial-access
+  - attack.t1190
+  - cve.2021-44228
+logsource:
+  category: proxy
+detection:
+  selection_uri:
+    c-uri|contains: &jndi
+      - '${jndi:'
+      - '%24%7Bjndi:'
+      - '%24%7Bjndi%3A'
+      - '${${'
+      - '%24%7B%24%7B'
+      - '${::-j}'
+      - '${lower:j}'
+      - '${upper:j}'
+  selection_ua:
+    c-useragent|contains: *jndi
+  condition: 1 of selection_*
+falsepositives:
+  - Vulnerability scanners checking for Log4Shell (still worth reviewing on exposed assets)
+level: critical

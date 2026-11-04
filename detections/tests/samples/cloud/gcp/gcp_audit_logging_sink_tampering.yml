@@ -1,0 +1,16 @@
+rule_id: 84196449-080a-4112-9449-8a1114330f92
+cases:
+  - name: SIEM export sink deleted
+    expect: match
+    event:
+      gcp.audit.method_name: google.logging.v2.ConfigServiceV2.DeleteSink
+      gcp.audit.service_name: logging.googleapis.com
+      gcp.audit.principal_email: ana@opensoc.example
+      gcp.audit.resource_name: projects/opensoc-prod/sinks/siem-export
+  - name: Sinks listed
+    expect: no_match
+    event:
+      gcp.audit.method_name: google.logging.v2.ConfigServiceV2.ListSinks
+      gcp.audit.service_name: logging.googleapis.com
+      gcp.audit.principal_email: secops@opensoc.example
+      gcp.audit.resource_name: projects/opensoc-prod

@@ -1,0 +1,35 @@
+rule_id: 57ff30f1-0976-4781-8b75-af1419326b23
+cases:
+  - name: IMAP sign-in succeeded after a spray
+    expect: match
+    event:
+      ResultType: '0'
+      ResultDescription: ''
+      UserPrincipalName: ana@opensoc.example
+      AppDisplayName: Office 365 Exchange Online
+      ClientAppUsed: IMAP4
+      IPAddress: 45.141.84.12
+      ConditionalAccessStatus: notApplied
+      AuthenticationRequirement: singleFactorAuthentication
+  - name: Modern authentication from the browser
+    expect: no_match
+    event:
+      ResultType: '0'
+      ResultDescription: ''
+      UserPrincipalName: ana@opensoc.example
+      AppDisplayName: OfficeHome
+      ClientAppUsed: Browser
+      IPAddress: 198.51.100.10
+      ConditionalAccessStatus: success
+      AuthenticationRequirement: multiFactorAuthentication
+  - name: Failed legacy authentication attempt
+    expect: no_match
+    event:
+      ResultType: '50126'
+      ResultDescription: Error validating credentials due to invalid username or password.
+      UserPrincipalName: ana@opensoc.example
+      AppDisplayName: Office 365 Exchange Online
+      ClientAppUsed: IMAP4
+      IPAddress: 45.141.84.12
+      ConditionalAccessStatus: notApplied
+      AuthenticationRequirement: singleFactorAuthentication

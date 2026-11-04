@@ -1,0 +1,28 @@
+title: Entra ID User MFA Disabled Or Security Info Deleted
+id: 179ef863-c97f-434e-875b-92027cd4112e
+status: test
+description: Detects per-user MFA being disabled or registered security info (authentication methods) being deleted, which lets an attacker register their own method or log in with a password only.
+references:
+  - https://learn.microsoft.com/en-us/entra/identity/monitoring-health/reference-audit-activities
+  - https://attack.mitre.org/techniques/T1556/006/
+author: OpenSOC Detection Engineering
+date: 2026-11-04
+tags:
+  - attack.defense-impairment
+  - attack.persistence
+  - attack.credential-access
+  - attack.t1556.006
+logsource:
+  product: azure
+  service: auditlogs
+detection:
+  selection:
+    OperationName:
+      - 'Disable Strong Authentication'
+      - 'User deleted security info'
+      - 'Admin deleted security info'
+    Result: 'success'
+  condition: selection
+falsepositives:
+  - Help desk resetting MFA for users who lost their device (should follow an identity verification procedure)
+level: high

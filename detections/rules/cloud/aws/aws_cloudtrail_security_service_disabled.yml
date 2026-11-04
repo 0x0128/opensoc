@@ -1,0 +1,37 @@
+title: AWS Security Monitoring Service Disabled
+id: 7b24c6b2-75cc-42c7-a973-ef3eb77c5b69
+status: test
+description: Detects GuardDuty, Security Hub, AWS Config or Macie being disabled or detached from the organization administrator, blinding cloud threat detection.
+references:
+  - https://docs.aws.amazon.com/guardduty/latest/APIReference/API_DeleteDetector.html
+  - https://attack.mitre.org/techniques/T1685/
+author: OpenSOC Detection Engineering
+date: 2026-11-04
+tags:
+  - attack.defense-impairment
+  - attack.t1685
+logsource:
+  product: aws
+  service: cloudtrail
+detection:
+  selection:
+    eventSource:
+      - 'guardduty.amazonaws.com'
+      - 'securityhub.amazonaws.com'
+      - 'config.amazonaws.com'
+      - 'macie2.amazonaws.com'
+    eventName:
+      - 'DeleteDetector'
+      - 'DisassociateFromMasterAccount'
+      - 'DisassociateFromAdministratorAccount'
+      - 'StopMonitoringMembers'
+      - 'DisableSecurityHub'
+      - 'StopConfigurationRecorder'
+      - 'DeleteConfigurationRecorder'
+      - 'DeleteDeliveryChannel'
+      - 'DisableMacie'
+      - 'DisableOrganizationAdminAccount'
+  condition: selection
+falsepositives:
+  - Decommissioning of AWS accounts or regions
+level: high

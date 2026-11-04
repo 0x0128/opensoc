@@ -1,0 +1,29 @@
+rule_id: 757dd1e5-9429-41ed-9334-4e27d43688d4
+cases:
+  - name: dnscat2 style encoded subdomain
+    expect: match
+    event:
+      src_ip: 10.20.30.40
+      src_port: 61000
+      dst_ip: 10.0.0.53
+      dst_port: 53
+      query: 4a6f686e446f653a50617373776f72643132332140656e636f6465646461746131.t.exfil-c2.net
+      record_type: TXT
+  - name: Long but legitimate ELB hostname
+    expect: no_match
+    event:
+      src_ip: 10.20.30.40
+      src_port: 61001
+      dst_ip: 10.0.0.53
+      dst_port: 53
+      query: internal-k8s-prodingressgroupappsvc0123456789abcdef.us-east-1.elb.amazonaws.com
+      record_type: A
+  - name: Regular hostname
+    expect: no_match
+    event:
+      src_ip: 10.20.30.40
+      src_port: 61002
+      dst_ip: 10.0.0.53
+      dst_port: 53
+      query: login.microsoftonline.com
+      record_type: A

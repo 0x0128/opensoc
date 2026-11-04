@@ -1,0 +1,28 @@
+title: AMSI Bypass Attempt In PowerShell Script Block
+id: 0e1febe5-d28d-408d-bac2-3dd4ab5be9ca
+status: test
+description: Detects PowerShell script blocks referencing internal AMSI members (AmsiUtils, amsiInitFailed, AmsiScanBuffer patching), used to disable the Antimalware Scan Interface before running malicious code.
+references:
+  - https://attack.mitre.org/techniques/T1685/
+  - https://learn.microsoft.com/en-us/windows/win32/amsi/antimalware-scan-interface-portal
+author: OpenSOC Detection Engineering
+date: 2026-11-04
+tags:
+  - attack.defense-impairment
+  - attack.t1685
+logsource:
+  category: ps_script
+  product: windows
+  definition: 'Requirements: PowerShell Script Block Logging (Event ID 4104) must be enabled'
+detection:
+  selection:
+    ScriptBlockText|contains:
+      - 'System.Management.Automation.AmsiUtils'
+      - 'amsiInitFailed'
+      - 'AmsiScanBuffer'
+      - 'amsiContext'
+      - 'AmsiOpenSession'
+  condition: selection
+falsepositives:
+  - Security research and detection engineering on lab hosts
+level: high

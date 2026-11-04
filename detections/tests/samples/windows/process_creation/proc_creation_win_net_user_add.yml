@@ -1,0 +1,18 @@
+rule_id: ae2311fc-3039-480d-bc4d-f7380f16d94e
+cases:
+  - name: Backdoor local account created
+    expect: match
+    event:
+      Image: 'C:\Windows\System32\net.exe'
+      OriginalFileName: 'net.exe'
+      CommandLine: 'net user helpdesk P@ssw0rd123! /add'
+      ParentImage: 'C:\Windows\System32\cmd.exe'
+      User: 'NT AUTHORITY\SYSTEM'
+  - name: Listing local users
+    expect: no_match
+    event:
+      Image: 'C:\Windows\System32\net.exe'
+      OriginalFileName: 'net.exe'
+      CommandLine: 'net user'
+      ParentImage: 'C:\Windows\System32\cmd.exe'
+      User: 'OPENSOC\jdoe'

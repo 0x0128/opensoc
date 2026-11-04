@@ -1,0 +1,34 @@
+rule_id: 56e5de9f-637d-47ba-ba61-1659a5d3123d
+cases:
+  - name: Implant executed from /dev/shm
+    expect: match
+    event:
+      type: EXECVE
+      a0: /dev/shm/kworker
+      comm: kworker
+      exe: /dev/shm/kworker
+      cwd: /root
+      uid: 0
+      key: exec
+  - name: Exploit compiled and run in /tmp with a relative path
+    expect: match
+    event:
+      type: EXECVE
+      a0: ./pwnkit
+      comm: pwnkit
+      exe: /tmp/pwnkit
+      cwd: /tmp
+      uid: 1001
+      key: exec
+  - name: Regular binary executed from the home directory
+    expect: no_match
+    event:
+      type: EXECVE
+      a0: ./deploy
+      a1: '--env'
+      a2: production
+      comm: deploy
+      exe: /home/ops/bin/deploy
+      cwd: /home/ops/bin
+      uid: 1001
+      key: exec

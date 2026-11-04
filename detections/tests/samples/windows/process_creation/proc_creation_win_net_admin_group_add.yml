@@ -1,0 +1,26 @@
+rule_id: 202012c9-768f-4c04-8e69-6b85dce54b3e
+cases:
+  - name: Account added to local Administrators
+    expect: match
+    event:
+      Image: 'C:\Windows\System32\net.exe'
+      OriginalFileName: 'net.exe'
+      CommandLine: 'net localgroup administrators helpdesk /add'
+      ParentImage: 'C:\Windows\System32\cmd.exe'
+      User: 'NT AUTHORITY\SYSTEM'
+  - name: Account added to Domain Admins through net1
+    expect: match
+    event:
+      Image: 'C:\Windows\System32\net1.exe'
+      OriginalFileName: 'net1.exe'
+      CommandLine: 'C:\Windows\system32\net1 group "Domain Admins" svc_sql /add /domain'
+      ParentImage: 'C:\Windows\System32\net.exe'
+      User: 'OPENSOC\jdoe'
+  - name: Listing members of the Administrators group
+    expect: no_match
+    event:
+      Image: 'C:\Windows\System32\net.exe'
+      OriginalFileName: 'net.exe'
+      CommandLine: 'net localgroup administrators'
+      ParentImage: 'C:\Windows\System32\cmd.exe'
+      User: 'OPENSOC\jdoe'

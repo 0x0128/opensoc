@@ -1,0 +1,22 @@
+rule_id: 05c40e68-9a51-43a1-9e11-953d91a23c82
+cases:
+  - name: Key appended to root authorized_keys
+    expect: match
+    event:
+      type: PATH
+      name: /root/.ssh/authorized_keys
+      comm: bash
+      exe: /usr/bin/bash
+      syscall: 257
+      uid: 0
+      key: ssh_keys
+  - name: known_hosts updated by ssh client
+    expect: no_match
+    event:
+      type: PATH
+      name: /root/.ssh/known_hosts
+      comm: ssh
+      exe: /usr/bin/ssh
+      syscall: 257
+      uid: 0
+      key: ssh_keys

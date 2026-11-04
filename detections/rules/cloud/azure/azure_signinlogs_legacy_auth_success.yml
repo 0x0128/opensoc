@@ -1,0 +1,37 @@
+title: Successful Entra ID Sign-In Using Legacy Authentication
+id: 57ff30f1-0976-4781-8b75-af1419326b23
+status: test
+description: Detects successful sign-ins through legacy authentication protocols (IMAP, POP3, SMTP AUTH, ActiveSync, EWS basic auth...), which do not support MFA and are the main vector of password spraying.
+references:
+  - https://learn.microsoft.com/en-us/entra/identity/conditional-access/block-legacy-authentication
+  - https://attack.mitre.org/techniques/T1110/003/
+author: OpenSOC Detection Engineering
+date: 2026-11-04
+tags:
+  - attack.initial-access
+  - attack.persistence
+  - attack.t1078.004
+  - attack.credential-access
+  - attack.t1110.003
+logsource:
+  product: azure
+  service: signinlogs
+detection:
+  selection:
+    ResultType: 0
+    ClientAppUsed:
+      - 'Exchange ActiveSync'
+      - 'IMAP4'
+      - 'POP3'
+      - 'Authenticated SMTP'
+      - 'Exchange Web Services'
+      - 'MAPI Over HTTP'
+      - 'Offline Address Book'
+      - 'Outlook Anywhere (RPC over HTTP)'
+      - 'Exchange Online PowerShell'
+      - 'AutoDiscover'
+      - 'Other clients'
+  condition: selection
+falsepositives:
+  - Legacy multifunction printers or line-of-business apps still using SMTP AUTH (plan their migration)
+level: medium

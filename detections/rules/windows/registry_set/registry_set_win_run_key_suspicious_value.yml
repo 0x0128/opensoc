@@ -1,0 +1,41 @@
+title: Run Key Persistence Pointing To Suspicious Location Or Interpreter
+id: fc51e125-0d62-4211-a03d-962e0af0c474
+status: test
+description: Detects a value written under the Run/RunOnce autostart keys whose data points to user-writable temp folders, script interpreters, LOLBins or URLs.
+references:
+  - https://attack.mitre.org/techniques/T1547/001/
+  - https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon
+author: OpenSOC Detection Engineering
+date: 2026-11-04
+tags:
+  - attack.persistence
+  - attack.privilege-escalation
+  - attack.t1547.001
+logsource:
+  category: registry_set
+  product: windows
+detection:
+  selection_key:
+    TargetObject|contains:
+      - '\SOFTWARE\Microsoft\Windows\CurrentVersion\Run\'
+      - '\SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce\'
+      - '\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Run\'
+  selection_details:
+    Details|contains:
+      - '\AppData\Local\Temp\'
+      - '\Windows\Temp\'
+      - '\Users\Public\'
+      - 'powershell'
+      - 'mshta'
+      - 'rundll32'
+      - 'regsvr32'
+      - 'wscript'
+      - 'cscript'
+      - 'cmd.exe /c'
+      - 'cmd /c'
+      - 'http://'
+      - 'https://'
+  condition: all of selection_*
+falsepositives:
+  - Installers that schedule a one-time RunOnce cleanup from the Temp folder
+level: medium

@@ -1,0 +1,18 @@
+rule_id: 70244858-911b-4f4e-99d1-ad47df64ee20
+cases:
+  - name: Domain trusts enumerated from a workstation
+    expect: match
+    event:
+      Image: 'C:\Windows\System32\nltest.exe'
+      OriginalFileName: 'nltestrk.exe'
+      CommandLine: 'nltest /domain_trusts /all_trusts'
+      ParentImage: 'C:\Windows\System32\cmd.exe'
+      User: 'OPENSOC\jdoe'
+  - name: Secure channel verification by the help desk
+    expect: no_match
+    event:
+      Image: 'C:\Windows\System32\nltest.exe'
+      OriginalFileName: 'nltestrk.exe'
+      CommandLine: 'nltest /sc_verify:opensoc.local'
+      ParentImage: 'C:\Windows\System32\cmd.exe'
+      User: 'OPENSOC\helpdesk01'

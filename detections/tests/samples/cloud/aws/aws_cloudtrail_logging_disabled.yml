@@ -1,0 +1,30 @@
+rule_id: 3e8d3750-a795-42ca-aa25-9d573e529065
+cases:
+  - name: Trail logging stopped by an IAM user
+    expect: match
+    event:
+      eventSource: cloudtrail.amazonaws.com
+      eventName: StopLogging
+      eventTime: '2026-11-04T10:00:00Z'
+      sourceIPAddress: 198.51.100.10
+      userAgent: aws-cli/2.17.0
+      userIdentity:
+        type: IAMUser
+        arn: 'arn:aws:iam::111122223333:user/dev-ops'
+        userName: dev-ops
+      requestParameters:
+        name: 'arn:aws:cloudtrail:us-east-1:111122223333:trail/org-trail'
+  - name: Trail status queried
+    expect: no_match
+    event:
+      eventSource: cloudtrail.amazonaws.com
+      eventName: GetTrailStatus
+      eventTime: '2026-11-04T10:01:00Z'
+      sourceIPAddress: 198.51.100.10
+      userAgent: aws-cli/2.17.0
+      userIdentity:
+        type: IAMUser
+        arn: 'arn:aws:iam::111122223333:user/dev-ops'
+        userName: dev-ops
+      requestParameters:
+        name: org-trail
