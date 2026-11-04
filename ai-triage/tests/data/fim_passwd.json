@@ -1,0 +1,22 @@
+{
+  "timestamp": "2026-11-04T12:00:00.000+0000",
+  "rule": {
+    "level": 7,
+    "description": "Integrity checksum changed.",
+    "id": "550",
+    "mitre": {"id": ["T1565.001"], "tactic": ["Impact"], "technique": ["Stored Data Manipulation"]},
+    "groups": ["ossec", "syscheck", "syscheck_entry_modified", "syscheck_file"]
+  },
+  "agent": {"id": "003", "name": "web-prod-01", "ip": "10.20.0.15"},
+  "id": "1762257600.3300",
+  "full_log": "File '/etc/passwd' modified\nMode: whodata\nChanged attributes: size,mtime,md5,sha1,sha256\n",
+  "syscheck": {
+    "path": "/etc/passwd",
+    "mode": "whodata",
+    "size_after": "2011",
+    "uname_after": "root",
+    "sha256_after": "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
+    "audit": {"user": {"name": "jsmith"}, "process": {"name": "/usr/sbin/useradd"}}
+  },
+  "location": "syscheck"
+}

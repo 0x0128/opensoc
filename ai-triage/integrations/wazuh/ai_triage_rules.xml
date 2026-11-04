@@ -1,0 +1,46 @@
+<!--
+  OpenSOC ai-triage rules. Copy to /var/ossec/etc/rules/ai_triage_rules.xml on the manager.
+  Events come from integrations/wazuh/custom-ai-triage.py through the Wazuh queue (JSON decoder).
+  Rule ids 100900-100909 are reserved for ai-triage; adjust if they clash with local rules.
+  All rules carry the "ai_triage" group, which the integration script uses as loop guard.
+-->
+<group name="ai_triage,">
+
+  <rule id="100900" level="3">
+    <decoded_as>json</decoded_as>
+    <field name="integration">^ai-triage$</field>
+    <description>AI triage ($(ai_triage.severity)): $(ai_triage.summary)</description>
+    <options>no_full_log</options>
+  </rule>
+
+  <rule id="100901" level="7">
+    <if_sid>100900</if_sid>
+    <field name="ai_triage.severity">^medium$</field>
+    <description>AI triage (medium) for rule $(ai_triage.source.rule_id): $(ai_triage.summary)</description>
+    <options>no_full_log</options>
+  </rule>
+
+  <rule id="100902" level="10">
+    <if_sid>100900</if_sid>
+    <field name="ai_triage.severity">^high$</field>
+    <description>AI triage (high) for rule $(ai_triage.source.rule_id): $(ai_triage.summary)</description>
+    <options>no_full_log</options>
+  </rule>
+
+  <rule id="100903" level="13">
+    <if_sid>100900</if_sid>
+    <field name="ai_triage.severity">^critical$</field>
+    <description>AI triage (critical) for rule $(ai_triage.source.rule_id): $(ai_triage.summary)</description>
+    <options>no_full_log</options>
+  </rule>
+
+  <!-- Text trying to manipulate the triage agent was found in a log: adversarial activity.
+       Not chained to 100903 so critical verdicts keep level 13. -->
+  <rule id="100905" level="12">
+    <if_sid>100900, 100901, 100902</if_sid>
+    <field name="ai_triage.prompt_injection_suspected">^true$</field>
+    <description>Prompt-injection attempt against AI triage in alert $(ai_triage.source.alert_id) (MITRE ATLAS AML.T0051)</description>
+    <options>no_full_log</options>
+  </rule>
+
+</group>

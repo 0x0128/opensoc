@@ -1,0 +1,71 @@
+# OpenSOC ai-triage service, ready to be included from the /infra compose project:
+#
+#   # infra/docker-compose.yml
+#   include:
+#     - path: ../ai-triage/compose.yaml
+#
+# Relative paths below resolve against this directory. The Wazuh manager must join the
+# "opensoc" network to reach http://ai-triage:8000/v1/triage. No host port is published.
+
+services:
+  ai-triage:
+    build:
+      context: .
+    image: opensoc/ai-triage:0.1.0
+    restart: unless-stopped
+    env_file:
+      - path: .env
+        required: false
+    expose:
+      - "8000"
+    networks:
+      - opensoc
+    volumes:
+      - ai-triage-audit:/var/log/ai-triage
+      - ./runbooks:/app/runbooks:ro
+    # Hardening: immutable root FS, no capabilities, no privilege escalation, bounded resources.
+    read_only: true
+    tmpfs:
+      - /tmp:size=16m,mode=1777
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    user: "10001:10001"
+    pids_limit: 128
+    mem_limit: 512m
+    cpus: 1.0
+    healthcheck:
+      test: ["CMD", "python", "-c", "import os,sys,urllib.request; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:%s/healthz' % os.environ.get('TRIAGE_PORT', '8000'), timeout=3).status == 200 else 1)"]
+      interval: 30s
+      timeout: 5s
+      start_period: 10s
+      retries: 3
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+
+  # Optional local LLM (keeps alert data on-premises): docker compose --profile ollama up -d
+  # then: docker compose exec ollama ollama pull <model>; set TRIAGE_LLM_PROVIDER=ollama,
+  # TRIAGE_LLM_MODEL=<model> and TRIAGE_LLM_BASE_URL=http://ollama:11434. Pin the image by digest.
+  ollama:
+    image: ${OLLAMA_IMAGE:-ollama/ollama:0.12.6}
+    profiles:
+      - ollama
+    restart: unless-stopped
+    expose:
+      - "11434"
+    networks:
+      - opensoc
+    volumes:
+      - ollama-models:/root/.ollama
+
+volumes:
+  ai-triage-audit:
+  ollama-models:
+
+networks:
+  opensoc:
+    name: opensoc

@@ -1,0 +1,14 @@
+{
+  "timestamp": "2026-11-04T11:30:00.000+0000",
+  "rule": {
+    "level": 5,
+    "description": "Application authentication failure",
+    "id": "100210",
+    "groups": ["application", "authentication_failed"]
+  },
+  "agent": {"id": "007", "name": "crm-app", "ip": "192.168.10.44"},
+  "id": "1762255800.1200",
+  "full_log": "auth failure for maria.lopez@example.org (DNI 12345678Z, tel +34 612 345 678) from 203.0.113.77 card=4111 1111 1111 1111 password=Sup3rS3cret! token=eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjMifQ.c2lnbmF0dXJlMTIz",
+  "data": {"srcip": "203.0.113.77", "dstuser": "mlopez", "email": "maria.lopez@example.org", "password": "Sup3rS3cret!"},
+  "location": "/var/log/crm/app.log"
+}

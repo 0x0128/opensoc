@@ -1,0 +1,12 @@
+<!--
+  Add inside <ossec_config> of /var/ossec/etc/ossec.conf on the Wazuh manager.
+  <api_key> must match TRIAGE_API_TOKEN of the ai-triage service.
+  <level> limits which alerts are sent (and therefore LLM cost); tune it to your volume.
+-->
+<integration>
+  <name>custom-ai-triage.py</name>
+  <hook_url>http://ai-triage:8000/v1/triage</hook_url>
+  <api_key>REPLACE_WITH_TRIAGE_API_TOKEN</api_key>
+  <level>7</level>
+  <alert_format>json</alert_format>
+</integration>
