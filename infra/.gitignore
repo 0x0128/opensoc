@@ -1,0 +1,10 @@
+# Runtime state created by install.sh — never commit it.
+.env
+.env.*
+!.env.example
+generated/
+data/
+
+# Python bytecode (unit tests)
+__pycache__/
+*.pyc

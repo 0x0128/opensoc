@@ -1,0 +1,115 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  compose:
+    name: Docker Compose
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: infra
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate docker-compose.yml with .env.example
+        run: |
+          docker compose version
+          docker compose --env-file .env.example config --quiet
+          echo "Services:"; docker compose --env-file .env.example config --services | sort
+
+      - name: Every image is pinned (tag or digest, never a bare or :latest tag)
+        run: |
+          docker compose --env-file .env.example config --images | sort -u | tee images.txt
+          if grep -Ev '@sha256:[0-9a-f]{64}$' images.txt | grep -E '(:latest$|^[^:]+$)'; then
+            echo "::error::unpinned image(s) found"; exit 1
+          fi
+
+      - name: Every long-running service has a healthcheck
+        run: |
+          docker compose --env-file .env.example config --format json > config.json
+          missing=$(jq -r '.services | to_entries[]
+            | select(.value.healthcheck == null or .value.healthcheck.disable == true)
+            | .key' config.json)
+          if [ -n "$missing" ]; then echo "::error::services without healthcheck: $missing"; exit 1; fi
+
+      - name: No secrets or runtime state committed
+        run: |
+          for path in .env generated data; do
+            if git ls-files --error-unmatch "$path" >/dev/null 2>&1 || [ -n "$(git ls-files "$path")" ]; then
+              echo "::error::$path must not be committed"; exit 1
+            fi
+          done
+          # Generated secrets in .env.example must be placeholders, never real values.
+          if grep -E '(PASSWORD|SECRET|_KEY|SALT)=' .env.example | grep -Ev '=(__GENERATE:[a-z]+[0-9]*__)?$'; then
+            echo "::error::.env.example contains a hard-coded secret"; exit 1
+          fi
+
+  shellcheck:
+    name: ShellCheck
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: shellcheck
+        run: |
+          shellcheck --version
+          mapfile -t files < <(git ls-files '*.sh'; echo infra/config/wazuh/integrations/custom-thehive)
+          printf '%s\n' "${files[@]}"
+          shellcheck -x -S style "${files[@]}"
+
+  lint:
+    name: Configuration lint and unit tests
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: yamllint
+        run: |
+          pip install --quiet yamllint
+          # Suricata's YAML uses yes/no booleans.
+          yamllint -d '{extends: default, rules: {line-length: disable, document-start: disable, truthy: {check-keys: false, allowed-values: ["true", "false", "yes", "no"]}, comments: {min-spaces-from-content: 1}}}' \
+            .github infra/docker-compose.yml infra/config
+
+      - name: JSON files are valid
+        run: |
+          git ls-files '*.json' | while read -r f; do jq empty "$f" && echo "ok $f"; done
+
+      - name: XML (Wazuh rules and ossec.conf template) is well-formed
+        run: |
+          python3 - <<'EOF'
+          import pathlib, xml.etree.ElementTree as ET
+          for path in ["infra/config/wazuh/ossec.conf.tpl", *map(str, pathlib.Path("infra/config/wazuh/rules").glob("*.xml"))]:
+              # Wazuh files may contain several root elements: wrap them.
+              ET.fromstring("<root>" + pathlib.Path(path).read_text() + "</root>")
+              print("ok", path)
+          EOF
+
+      - name: Python compiles and unit tests pass
+        run: |
+          python3 -m py_compile infra/config/wazuh/integrations/custom-thehive.py infra/config/misp-sync/misp_to_wazuh.py
+          PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s infra/tests -v
+
+  suricata:
+    name: Suricata configuration and rules
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: suricata -T (OpenSOC overrides + local rules)
+        run: |
+          image=$(grep -oE 'jasonish/suricata:[0-9.]+' infra/docker-compose.yml | head -n1)
+          docker run --rm -v "$PWD/infra/config/suricata:/opensoc:ro" "$image" \
+            -T -S /opensoc/rules/opensoc.rules --include /opensoc/opensoc.yaml -l /tmp
