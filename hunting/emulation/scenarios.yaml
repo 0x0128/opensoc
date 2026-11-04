@@ -1,0 +1,279 @@
+# Atomic Red Team emulation scenarios for the OpenSOC lab.
+#
+# FOR YOUR OWN LAB ONLY: these tests execute real attack techniques
+# (LSASS dumping, persistence, log clearing...). opensoc-emulate only
+# launches them with --execute and against hosts listed in OPENSOC_LAB_TARGETS.
+#
+# Tests are selected by GUID (Atomic Red Team auto_generated_guid), which
+# does not change even if ART renumbers the tests or moves the technique to another folder.
+#
+# How detection is checked: after running the test, alerts are searched for in the
+# wazuh-alerts-* index of the target agent, within the time window of the
+# execution, whose rule.mitre.id is in `technique` + `technique_aliases`, or whose
+# rule.id is in `detection.rule_ids` or in the /detections rules that declare
+# that technique. With --strict only the /detections rules (or rule_ids) count.
+#
+# `technique_aliases` holds legacy IDs: ATT&CK renumbered some techniques (e.g.
+# Clear Windows Event Logs went from T1070.001 to T1685.005) and the Wazuh ruleset and
+# many custom rules still use the old ID.
+
+version: 1
+
+defaults:
+  detection_timeout: 180   # maximum seconds to wait for the alert to arrive
+  min_level: 3             # minimum Wazuh rule level that counts as a detection
+
+scenarios:
+  - id: EMU-01
+    name: PowerShell with a Base64-encoded command
+    platform: windows
+    tactics: [execution]
+    technique: T1059.001
+    technique_aliases: []
+    description: >
+      Runs powershell.exe -e <base64> with an obfuscated Write-Host. It is the typical
+      pattern of loaders and malicious macros that hide the real command.
+    atomic:
+      technique: T1059.001
+      guid: a538de64-1c74-46ed-aa60-b995ed302598
+      name: PowerShell Command Execution
+      elevation_required: false
+      input_args: {}
+    detection:
+      rule_ids: []
+    telemetry:
+      - "Sysmon EID 1: powershell.exe with -e / -EncodedCommand in commandLine"
+      - "PowerShell Operational EID 4104 (Script Block Logging)"
+    requirements:
+      - Sysmon with process creation events (EID 1)
+      - Script Block Logging enabled by GPO and the Microsoft-Windows-PowerShell/Operational channel collected by the agent
+    hypotheses: [H01]
+
+  - id: EMU-02
+    name: LSASS dump with comsvcs.dll (MiniDump)
+    platform: windows
+    tactics: [credential-access]
+    technique: T1003.001
+    technique_aliases: []
+    description: >
+      rundll32.exe C:\Windows\System32\comsvcs.dll, MiniDump <lsass pid> ...
+      dumps the LSASS memory to %TEMP%\lsass-comsvcs.dmp. The cleanup deletes the
+      dump. If Defender/EDR blocks it, the test fails: record that result too.
+    atomic:
+      technique: T1003.001
+      guid: 2536dee2-12fb-459a-8c37-971844fa73be
+      name: Dump LSASS.exe Memory using comsvcs.dll
+      elevation_required: true
+      input_args: {}
+    detection:
+      rule_ids: []
+    telemetry:
+      - "Sysmon EID 1: rundll32.exe with comsvcs.dll and MiniDump"
+      - "Sysmon EID 10: access to lsass.exe (GrantedAccess 0x1FFFFF / 0x1410...)"
+      - "Sysmon EID 11: creation of lsass-comsvcs.dmp"
+    requirements:
+      - Sysmon configuration that logs ProcessAccess (EID 10) on lsass.exe
+      - Elevated session (administrator)
+    hypotheses: [H02]
+
+  - id: EMU-03
+    name: Scheduled tasks at logon and at startup
+    platform: windows
+    tactics: [execution, persistence, privilege-escalation]
+    technique: T1053.005
+    technique_aliases: []
+    description: >
+      schtasks /create of two tasks (ONLOGON, and ONSTART as SYSTEM) that launch
+      cmd.exe /c calc.exe. The cleanup removes them.
+    atomic:
+      technique: T1053.005
+      guid: fec27f65-db86-4c2d-b66c-61945aee87c2
+      name: Scheduled Task Startup Script
+      elevation_required: true
+      input_args: {}
+    detection:
+      rule_ids: []
+    telemetry:
+      - "Sysmon EID 1: schtasks.exe /create"
+      - "Security EID 4698: scheduled task created (requires auditing 'Other Object Access Events')"
+    requirements:
+      - Sysmon EID 1 and/or advanced Object Access auditing
+    hypotheses: [H04]
+
+  - id: EMU-04
+    name: Persistence in the HKCU Run key
+    platform: windows
+    tactics: [persistence, privilege-escalation]
+    technique: T1547.001
+    technique_aliases: []
+    description: >
+      REG ADD HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Run /V "Atomic Red Team".
+      The cleanup deletes the value.
+    atomic:
+      technique: T1547.001
+      guid: e55be3fd-3521-4610-9d1a-e210e42dcf05
+      name: Reg Key Run
+      elevation_required: false
+      input_args: {}
+    detection:
+      rule_ids: []
+    telemetry:
+      - "Sysmon EID 13: value written to ...\\CurrentVersion\\Run"
+      - "Sysmon EID 1: reg.exe add"
+    requirements:
+      - Sysmon with registry events (EID 12/13). Wazuh registry FIM does not cover HKCU by default
+    hypotheses: [H03]
+
+  - id: EMU-05
+    name: Clearing the System event log with wevtutil
+    platform: windows
+    tactics: [defense-impairment]
+    technique: T1685.005
+    technique_aliases: [T1070.001]
+    irreversible: true
+    description: >
+      wevtutil cl System. It has no cleanup: the System log of the host is lost.
+      That is why opensoc-emulate only runs it with --allow-irreversible.
+    atomic:
+      technique: T1685.005
+      guid: e6abb60e-26b8-41da-8aae-0c35174b0967
+      name: Clear Logs
+      elevation_required: true
+      input_args:
+        log_name: System
+    detection:
+      rule_ids: []
+    telemetry:
+      - "System EID 104: event log cleared"
+      - "Sysmon EID 1: wevtutil.exe cl"
+    requirements:
+      - The agent must collect the System channel (the Wazuh default)
+    hypotheses: [H07]
+
+  - id: EMU-06
+    name: File download with certutil -urlcache
+    platform: windows
+    tactics: [command-and-control]
+    technique: T1105
+    technique_aliases: []
+    description: >
+      certutil -urlcache -split -f <url> Atomic-license.txt. By default it downloads
+      the Atomic Red Team LICENSE from GitHub; in an isolated lab point
+      remote_file to your own HTTP server with
+      --input-arg EMU-06.remote_file=http://server.lab.local:8000/file.txt
+    atomic:
+      technique: T1105
+      guid: dd3b61dd-7bbc-48cd-ab51-49ad1a776df0
+      name: certutil download (urlcache)
+      elevation_required: false
+      input_args: {}
+    detection:
+      rule_ids: []
+    telemetry:
+      - "Sysmon EID 1: certutil.exe with -urlcache / -split / -f"
+      - "Sysmon EID 3: outbound connection from certutil.exe"
+      - "Sysmon EID 11: downloaded file"
+    requirements:
+      - Sysmon EID 1 (and EID 3 for the network pivot)
+    hypotheses: [H06]
+
+  - id: EMU-07
+    name: Local user creation on Linux (useradd)
+    platform: linux
+    tactics: [persistence]
+    technique: T1136.001
+    technique_aliases: []
+    description: >
+      useradd -M -N -r -s /bin/bash -c evil_account evil_user. The cleanup runs
+      userdel evil_user.
+    atomic:
+      technique: T1136.001
+      guid: 40d8eabd-e394-46f6-8785-b9bfa1d011d2
+      name: Create a user account on a Linux system
+      elevation_required: true
+      input_args:
+        username: evil_user
+    detection:
+      rule_ids: []
+    telemetry:
+      - "auth.log / journald: useradd new user name=evil_user"
+      - "auditd (ADD_USER) if enabled"
+    requirements:
+      - The agent must read /var/log/auth.log (Debian/Ubuntu), /var/log/secure (RHEL) or journald
+    hypotheses: [H12]
+
+  - id: EMU-08
+    name: Persistence with a file in /etc/cron.d
+    platform: linux
+    tactics: [execution, persistence, privilege-escalation]
+    technique: T1053.003
+    technique_aliases: []
+    description: >
+      Writes /etc/cron.d/persistevil with a task that runs as root every 5
+      minutes. The cleanup deletes the file.
+    atomic:
+      technique: T1053.003
+      guid: 078e69eb-d9fb-450e-b9d0-2e118217c846
+      name: Cron - Add script to /etc/cron.d folder
+      elevation_required: true
+      input_args: {}
+    detection:
+      rule_ids: []
+      timeout: 300
+    telemetry:
+      - "Wazuh FIM (syscheck): file added in /etc/cron.d"
+      - "auditd: write to /etc/cron.d if there is a watch rule"
+    requirements:
+      - "Real-time FIM: <directories realtime=\"yes\">/etc/cron.d,/etc/crontab,/var/spool/cron</directories>"
+    hypotheses: [H13]
+
+  - id: EMU-09
+    name: Modification of ~/.ssh/authorized_keys
+    platform: linux
+    tactics: [persistence, privilege-escalation]
+    technique: T1098.004
+    technique_aliases: []
+    description: >
+      Rewrites ~/.ssh/authorized_keys of the user running the test (if it exists).
+      The content does not change, but the mtime does, which is what FIM sees.
+    atomic:
+      technique: T1098.004
+      guid: 342cc723-127c-4d3a-8292-9c0c6b4ecadc
+      name: Modify SSH Authorized Keys
+      elevation_required: false
+      input_args: {}
+    detection:
+      rule_ids: []
+      timeout: 300
+    telemetry:
+      - "Wazuh FIM (syscheck): authorized_keys modified (mtime)"
+    requirements:
+      - The ~/.ssh/authorized_keys file must exist for the test user
+      - "Real-time FIM or whodata on /root/.ssh and /home/*/.ssh with check_mtime"
+    hypotheses: [H13]
+
+  - id: EMU-10
+    name: Creation of a systemd service
+    platform: linux
+    tactics: [persistence, privilege-escalation]
+    technique: T1543.002
+    technique_aliases: []
+    description: >
+      Creates /etc/systemd/system/art-systemd-service.service, enables it and
+      starts it (it only touches marker files in /tmp). The cleanup stops it,
+      disables it and deletes the unit.
+    atomic:
+      technique: T1543.002
+      guid: d9e4f24f-aa67-4c6e-bcbf-85622b697a7c
+      name: Create Systemd Service
+      elevation_required: true
+      input_args: {}
+    detection:
+      rule_ids: []
+      timeout: 300
+    telemetry:
+      - "Wazuh FIM (syscheck): new unit in /etc/systemd/system"
+      - "journald/syslog: systemd starts art-systemd-service"
+    requirements:
+      - "Real-time FIM on /etc/systemd/system and /usr/lib/systemd/system"
+    hypotheses: [H13]

@@ -1,0 +1,8 @@
+type,value,description,tags,tlp,confidence,first_seen,source,to_ids
+ipv4,203.0.113.45,C2 of the November purple team exercise,lab;c2,amber,80,2026-11-01T09:00:00Z,OpenSOC exercise,true
+domain,update-checker[.]example,Beaconing domain (defanged in the report),lab;c2,amber,70,2026-11-01T09:00:00Z,OpenSOC exercise,true
+url,hxxp://198.51.100.7:8000/stage2.ps1,Second stage download,lab,amber,70,,OpenSOC exercise,true
+sha256,4f0c0fbb3a1e0b8b1e3a0c6c1a4e5d1d9a1f4b8f2e7f5b6c1d0a9e8f7a6b5c4d,Payload stage2.ps1,lab;payload,amber,90,,OpenSOC exercise,true
+md5,0cc175b9c0f1b6a831c399e269772661,Test hash,lab,green,,,OpenSOC exercise,false
+,evil-dropper.exe,Dropper name (inferred type),lab,green,,,OpenSOC exercise,true
+email,phish@malicious.example,Phishing sender,lab;phishing,green,60,,OpenSOC exercise,true

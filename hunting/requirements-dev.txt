@@ -1,0 +1,4 @@
+-r requirements.txt
+pytest>=8.0
+# Only used in the tests to validate that the generated bundles comply with STIX 2.1.
+stix2>=3.0

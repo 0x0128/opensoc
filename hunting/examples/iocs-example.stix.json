@@ -1,0 +1,272 @@
+{
+  "type": "bundle",
+  "id": "bundle--3d2f3517-ac66-4b43-90d0-a301fa6c3062",
+  "objects": [
+    {
+      "type": "identity",
+      "spec_version": "2.1",
+      "id": "identity--4d088831-9468-5bfc-9609-96c27d70a732",
+      "created": "2026-11-04T21:28:43.588Z",
+      "modified": "2026-11-04T21:28:43.588Z",
+      "name": "OpenSOC Lab",
+      "identity_class": "organization"
+    },
+    {
+      "type": "marking-definition",
+      "spec_version": "2.1",
+      "id": "marking-definition--f88d31f6-486f-44da-b317-01333bde0b82",
+      "created": "2017-01-20T00:00:00.000Z",
+      "definition_type": "tlp",
+      "name": "TLP:AMBER",
+      "definition": {
+        "tlp": "amber"
+      }
+    },
+    {
+      "type": "marking-definition",
+      "spec_version": "2.1",
+      "id": "marking-definition--34098fce-860f-48ae-8e50-ebd3cc5e41da",
+      "created": "2017-01-20T00:00:00.000Z",
+      "definition_type": "tlp",
+      "name": "TLP:GREEN",
+      "definition": {
+        "tlp": "green"
+      }
+    },
+    {
+      "type": "indicator",
+      "spec_version": "2.1",
+      "id": "indicator--320808cf-6c9c-5ef7-acc2-24d263eddb03",
+      "created": "2026-11-04T21:28:43.588Z",
+      "modified": "2026-11-04T21:28:43.588Z",
+      "created_by_ref": "identity--4d088831-9468-5bfc-9609-96c27d70a732",
+      "labels": [
+        "lab",
+        "c2"
+      ],
+      "confidence": 80,
+      "external_references": [
+        {
+          "source_name": "OpenSOC exercise",
+          "description": "IOC source"
+        }
+      ],
+      "object_marking_refs": [
+        "marking-definition--f88d31f6-486f-44da-b317-01333bde0b82"
+      ],
+      "name": "ipv4: 203.0.113.45",
+      "indicator_types": [
+        "malicious-activity"
+      ],
+      "pattern": "[ipv4-addr:value = '203.0.113.45']",
+      "pattern_type": "stix",
+      "pattern_version": "2.1",
+      "valid_from": "2026-11-01T09:00:00.000Z",
+      "description": "C2 of the November purple team exercise"
+    },
+    {
+      "type": "indicator",
+      "spec_version": "2.1",
+      "id": "indicator--fb891b38-591a-5276-9f28-4cd6006e750e",
+      "created": "2026-11-04T21:28:43.588Z",
+      "modified": "2026-11-04T21:28:43.588Z",
+      "created_by_ref": "identity--4d088831-9468-5bfc-9609-96c27d70a732",
+      "labels": [
+        "lab",
+        "c2"
+      ],
+      "confidence": 70,
+      "external_references": [
+        {
+          "source_name": "OpenSOC exercise",
+          "description": "IOC source"
+        }
+      ],
+      "object_marking_refs": [
+        "marking-definition--f88d31f6-486f-44da-b317-01333bde0b82"
+      ],
+      "name": "domain: update-checker.example",
+      "indicator_types": [
+        "malicious-activity"
+      ],
+      "pattern": "[domain-name:value = 'update-checker.example']",
+      "pattern_type": "stix",
+      "pattern_version": "2.1",
+      "valid_from": "2026-11-01T09:00:00.000Z",
+      "description": "Beaconing domain (defanged in the report)"
+    },
+    {
+      "type": "indicator",
+      "spec_version": "2.1",
+      "id": "indicator--78d717a3-d46d-5460-9205-be0efa61d919",
+      "created": "2026-11-04T21:28:43.588Z",
+      "modified": "2026-11-04T21:28:43.588Z",
+      "created_by_ref": "identity--4d088831-9468-5bfc-9609-96c27d70a732",
+      "labels": [
+        "lab"
+      ],
+      "confidence": 70,
+      "external_references": [
+        {
+          "source_name": "OpenSOC exercise",
+          "description": "IOC source"
+        }
+      ],
+      "object_marking_refs": [
+        "marking-definition--f88d31f6-486f-44da-b317-01333bde0b82"
+      ],
+      "name": "url: http://198.51.100.7:8000/stage2.ps1",
+      "indicator_types": [
+        "malicious-activity"
+      ],
+      "pattern": "[url:value = 'http://198.51.100.7:8000/stage2.ps1']",
+      "pattern_type": "stix",
+      "pattern_version": "2.1",
+      "valid_from": "2026-11-04T21:28:43.588Z",
+      "description": "Second stage download"
+    },
+    {
+      "type": "indicator",
+      "spec_version": "2.1",
+      "id": "indicator--4354be97-2790-58ab-9290-5922ab957f05",
+      "created": "2026-11-04T21:28:43.588Z",
+      "modified": "2026-11-04T21:28:43.588Z",
+      "created_by_ref": "identity--4d088831-9468-5bfc-9609-96c27d70a732",
+      "labels": [
+        "lab",
+        "payload"
+      ],
+      "confidence": 90,
+      "external_references": [
+        {
+          "source_name": "OpenSOC exercise",
+          "description": "IOC source"
+        }
+      ],
+      "object_marking_refs": [
+        "marking-definition--f88d31f6-486f-44da-b317-01333bde0b82"
+      ],
+      "name": "sha256: 4f0c0fbb3a1e0b8b1e3a0c6c1a4e5d1d9a1f4b8f2e7f5b6c1d0a9e8f7a6b5c4d",
+      "indicator_types": [
+        "malicious-activity"
+      ],
+      "pattern": "[file:hashes.'SHA-256' = '4f0c0fbb3a1e0b8b1e3a0c6c1a4e5d1d9a1f4b8f2e7f5b6c1d0a9e8f7a6b5c4d']",
+      "pattern_type": "stix",
+      "pattern_version": "2.1",
+      "valid_from": "2026-11-04T21:28:43.588Z",
+      "description": "Payload stage2.ps1"
+    },
+    {
+      "type": "file",
+      "spec_version": "2.1",
+      "id": "file--4e44643c-c9be-5146-8edf-c5f1a650fd5f",
+      "hashes": {
+        "MD5": "0cc175b9c0f1b6a831c399e269772661"
+      },
+      "object_marking_refs": [
+        "marking-definition--34098fce-860f-48ae-8e50-ebd3cc5e41da"
+      ]
+    },
+    {
+      "type": "observed-data",
+      "spec_version": "2.1",
+      "id": "observed-data--91d49abc-c364-5cd6-a2bb-ce79afd55a76",
+      "created": "2026-11-04T21:28:43.588Z",
+      "modified": "2026-11-04T21:28:43.588Z",
+      "created_by_ref": "identity--4d088831-9468-5bfc-9609-96c27d70a732",
+      "labels": [
+        "lab"
+      ],
+      "external_references": [
+        {
+          "source_name": "OpenSOC exercise",
+          "description": "IOC source"
+        }
+      ],
+      "object_marking_refs": [
+        "marking-definition--34098fce-860f-48ae-8e50-ebd3cc5e41da"
+      ],
+      "first_observed": "2026-11-04T21:28:43.588Z",
+      "last_observed": "2026-11-04T21:28:43.588Z",
+      "number_observed": 1,
+      "object_refs": [
+        "file--4e44643c-c9be-5146-8edf-c5f1a650fd5f"
+      ]
+    },
+    {
+      "type": "note",
+      "spec_version": "2.1",
+      "id": "note--fb01124e-7067-5d53-b802-bb56a39e87ba",
+      "created": "2026-11-04T21:28:43.588Z",
+      "modified": "2026-11-04T21:28:43.588Z",
+      "created_by_ref": "identity--4d088831-9468-5bfc-9609-96c27d70a732",
+      "content": "Test hash",
+      "object_refs": [
+        "observed-data--91d49abc-c364-5cd6-a2bb-ce79afd55a76"
+      ],
+      "object_marking_refs": [
+        "marking-definition--34098fce-860f-48ae-8e50-ebd3cc5e41da"
+      ]
+    },
+    {
+      "type": "indicator",
+      "spec_version": "2.1",
+      "id": "indicator--d3095400-c1a7-5a03-acbc-083f2457c615",
+      "created": "2026-11-04T21:28:43.588Z",
+      "modified": "2026-11-04T21:28:43.588Z",
+      "created_by_ref": "identity--4d088831-9468-5bfc-9609-96c27d70a732",
+      "labels": [
+        "lab"
+      ],
+      "external_references": [
+        {
+          "source_name": "OpenSOC exercise",
+          "description": "IOC source"
+        }
+      ],
+      "object_marking_refs": [
+        "marking-definition--34098fce-860f-48ae-8e50-ebd3cc5e41da"
+      ],
+      "name": "filename: evil-dropper.exe",
+      "indicator_types": [
+        "malicious-activity"
+      ],
+      "pattern": "[file:name = 'evil-dropper.exe']",
+      "pattern_type": "stix",
+      "pattern_version": "2.1",
+      "valid_from": "2026-11-04T21:28:43.588Z",
+      "description": "Dropper name (inferred type)"
+    },
+    {
+      "type": "indicator",
+      "spec_version": "2.1",
+      "id": "indicator--5174442c-f382-52ac-8571-c2f6093c8f28",
+      "created": "2026-11-04T21:28:43.588Z",
+      "modified": "2026-11-04T21:28:43.588Z",
+      "created_by_ref": "identity--4d088831-9468-5bfc-9609-96c27d70a732",
+      "labels": [
+        "lab",
+        "phishing"
+      ],
+      "confidence": 60,
+      "external_references": [
+        {
+          "source_name": "OpenSOC exercise",
+          "description": "IOC source"
+        }
+      ],
+      "object_marking_refs": [
+        "marking-definition--34098fce-860f-48ae-8e50-ebd3cc5e41da"
+      ],
+      "name": "email: phish@malicious.example",
+      "indicator_types": [
+        "malicious-activity"
+      ],
+      "pattern": "[email-addr:value = 'phish@malicious.example']",
+      "pattern_type": "stix",
+      "pattern_version": "2.1",
+      "valid_from": "2026-11-04T21:28:43.588Z",
+      "description": "Phishing sender"
+    }
+  ]
+}
